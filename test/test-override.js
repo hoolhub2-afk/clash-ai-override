@@ -1,12 +1,14 @@
 // EALC 修复回归测试: 对覆写脚本 main() 做结构级断言
-// 被测脚本由下方 TARGET 常量指定, 且必须位于本测试所在目录。
+// 被测脚本为仓库根目录的 override.js(白名单校验)。
 // 每条断言对应评审 ISSUE: 修复前必须 FAIL, 修复后必须 PASS。
+// 用法: node test/test-override.js
 "use strict";
 const fs = require("fs");
 const path = require("path");
-const ROOT = __dirname;
+const TESTDIR = __dirname;
+const ROOT = path.resolve(__dirname, "..");
 
-// 被测脚本: 白名单 + 目录边界校验, 禁止越出本目录。
+// 被测脚本: 白名单 + 目录边界校验, 禁止越出仓库根目录。
 const ALLOWED_TARGETS = ["override.js"];
 const TARGET = "override.js";
 if (ALLOWED_TARGETS.indexOf(TARGET) === -1) throw new Error("target not in whitelist");
@@ -15,8 +17,8 @@ if (!targetAbs.startsWith(ROOT + path.sep)) throw new Error("target outside root
 if (path.basename(targetAbs) !== TARGET) throw new Error("basename mismatch");
 if (!fs.existsSync(targetAbs)) throw new Error("target not found: " + TARGET);
 
-// 开关变体: 把目标源码中的开关常量替换后写入固定临时文件, 以字面量 require 加载。
-// 不使用 eval/new Function/变量路径 require; 临时文件用固定名, 用毕清理。
+// 开关变体: 把目标源码中的开关常量替换后写入固定临时文件(本测试目录内),
+// 以字面量 require 加载。不使用 eval/new Function/变量路径 require; 用毕清理。
 const UNIFY_PATCH = ["var UNIFY_AI_AND_GLOBAL = false;", "var UNIFY_AI_AND_GLOBAL = true;"];
 const DOCKER_PATCH = ["var DOCKER_HUB_VIA_PROXY = true;", "var DOCKER_HUB_VIA_PROXY = false;"];
 
@@ -26,7 +28,7 @@ function prepareVariant(file, patches) {
     if (source.indexOf(from) === -1) throw new Error("patch anchor missing: " + from);
     source = source.replace(from, to);
   }
-  fs.writeFileSync(path.join(ROOT, file), source + '\nif (typeof module !== "undefined") module.exports = main;');
+  fs.writeFileSync(path.join(TESTDIR, file), source + '\nif (typeof module !== "undefined") module.exports = main;');
 }
 
 function requireVariant(file) {
@@ -38,7 +40,7 @@ function requireVariant(file) {
 
 function cleanupVariants() {
   for (const f of [".tmp-variant-base.js", ".tmp-variant-unify.js", ".tmp-variant-docker-direct.js"]) {
-    try { fs.unlinkSync(path.join(ROOT, f)); } catch (_) { /* absent */ }
+    try { fs.unlinkSync(path.join(TESTDIR, f)); } catch (_) { /* absent */ }
   }
 }
 
@@ -56,14 +58,13 @@ const DOCKER = "🐳 容器专属 (JP/SG)";
 const AI_AUTO = "🤖 AI 自动 (稳态)";
 const AI_TEST_URL = "https://chatgpt.com/cdn-cgi/trace";
 
+function node(name) { return { name: name, type: "ss", server: "203.0.113.1", port: 443 }; }
 const S1_PROXIES = [
   "HK IEPL 01", "US Los Angeles 01", "US San Jose 02", "JP Tokyo 01",
   "JP Osaka 02", "SG Lion 01", "KR Seoul 01", "TR Istanbul 01",
   "剩余流量：10GB", "US Los Angeles 01",
   "Expire Date: 2027-03-02", "Traffic Reset: 9 Days Left", "221.06 GB | 850 GB"
 ].map(node);
-
-function node(name) { return { name: name, type: "ss", server: "203.0.113.1", port: 443 }; }
 const PROVIDERS = { sub1: { type: "http", url: "https://example.com/sub" } };
 
 function run(mod, proxies, providers) {

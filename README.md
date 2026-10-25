@@ -13,7 +13,7 @@ FlClash / Clash Verge(mihomo 内核)覆写脚本:**AI 专属分组 + 整机出�
 
 ## 使用
 
-1. 把 [`override.js`](override.js) 全文粘贴进 FlClash 的「覆写」或 Clash Verge 的扩展脚本;也可以用无注释版 [`override.min.js`](override.min.js)(由 `node strip-comments.js` 从源生成,构建时自动做行为等价与零注释校验,两者任选其一)。
+1. 把 [`override.js`](override.js) 全文粘贴进 FlClash 的「覆写」或 Clash Verge 的扩展脚本;也可以用无注释版 [`override.min.js`](override.min.js)(由 `node scripts/strip-comments.js` 从源生成,构建时自动做行为等价与零注释校验,两者任选其一)。
 2. **先把 `PROXY_PASS` 的 `CHANGE_ME` 改成自己的密码**,再保存。
 3. 在「🤖 AI 专属」里选一个节点(手动指定最稳);「🌐 全局代理」保持默认(自动跟随 AI 专属)。
 4. 局域网设备 / Docker 容器接入时: `http://lan:<你的密码>@<本机IP>:7895`(本机自身免密)。
@@ -33,15 +33,15 @@ FlClash / Clash Verge(mihomo 内核)覆写脚本:**AI 专属分组 + 整机出�
 ## 测试与验证
 
 ```bash
-# 结构回归: 18 条断言(空组、规则顺序、循环引用、鉴权字段、过滤器等)
-node test-override.js
+# 结构回归: 20 条断言(空组、规则顺序、循环引用、鉴权字段、过滤器等)
+node test/test-override.js
 
 # 构建无注释版 override.min.js(含行为等价 + 零注释幂等自检)
-node strip-comments.js
+node scripts/strip-comments.js
 
 # 真内核校验: 从 FlClash/Clash Verge 数据目录拷贝 geosite.dat、geoip.dat、
 # Country.mmdb 进 verify/(缺 mmdb 时 GEOIP 规则会尝试联网下载而失败)
-node gen-verify-config.js
+node scripts/gen-verify-config.js
 mihomo -t -d verify -f verify/config.json     # 场景 A: 常规静态订阅
 mihomo -t -d verify -f verify/config-b.json   # 场景 B: 纯港节点 + provider
 ```
@@ -60,6 +60,19 @@ mihomo -t -d verify -f verify/config-b.json   # 场景 B: 纯港节点 + provide
 - 本项目与 mihomo / Clash / FlClash / Clash Verge 及配置中提及的任何服务商均无隶属关系;
 - 配置中出现的第三方服务名称与域名仅用于路由规则示例,不代表任何合作或认可。
 
+## 仓库结构
+
+```
+override.js              覆写脚本源码(唯一需要人工维护的文件)
+override.min.js          无注释构建产物(node scripts/strip-comments.js 生成, 勿手改)
+test/test-override.js    结构回归测试(20 条断言)
+scripts/strip-comments.js       无注释构建工具
+scripts/gen-verify-config.js    真内核校验配置生成
+scripts/privacy-scan.sh         推送前隐私泄露扫描
+verify/                  真内核校验样例配置与 provider 夹具
+archive/                 原始脚本留档(勿直接使用)
+```
+
 ## 平台说明
 
 一套脚本同时适配 Windows 与 macOS(FlClash / Clash Verge Rev 双端),无需分开维护:
@@ -73,7 +86,7 @@ mihomo -t -d verify -f verify/config-b.json   # 场景 B: 纯港节点 + provide
 本仓库禁止出现任何隐私内容:真实姓名、账号、邮箱、密码、订阅信息、真实节点/服务器地址。发布前已做全量审计(文件内容、IP 归属、git 作者/提交者元数据),并固化为可重复执行的推送前检查:
 
 ```bash
-bash privacy-scan.sh
+bash scripts/privacy-scan.sh
 ```
 
 - 禁止模式来自 `.privacy-local.txt`(仅存在于本地、已被 `.gitignore` 排除、永不入库;一行一条,自行维护);

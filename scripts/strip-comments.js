@@ -1,16 +1,17 @@
-// 构建工具: 从 override.js 生成无注释版 override.min.js。
+// 构建工具: 从仓库根目录的 override.js 生成无注释版 override.min.js。
 // 剥离器是识别字符串/正则字面量的状态机(URL 里的 // 不会被误删)。
 // 落盘前两项自检: 1) 与注释版对同一组夹具生成的配置逐字节一致(行为等价);
 // 2) 对产物再剥一遍结果不变(幂等, 证明零注释残留)。
-// 用法: node strip-comments.js
+// 用法: node scripts/strip-comments.js
 "use strict";
 const fs = require("fs");
 const path = require("path");
-const ROOT = __dirname;
+const TOOLDIR = __dirname;
+const ROOT = path.resolve(__dirname, "..");
 
 const SRC = "override.js";
 const DST = "override.min.js";
-// 白名单 + 目录边界校验, 禁止越出本目录
+// 白名单 + 目录边界校验, 禁止越出仓库根目录
 const ALLOWED_TARGETS = { "override.js": true, "override.min.js": true };
 if (!ALLOWED_TARGETS[SRC] || !ALLOWED_TARGETS[DST]) throw new Error("file not in whitelist");
 const srcAbs = path.resolve(ROOT, SRC);
@@ -95,10 +96,10 @@ const FIXTURES = [
   })
 ];
 
-fs.writeFileSync(path.join(ROOT, ".tmp-strip-src.js"),
+fs.writeFileSync(path.join(TOOLDIR, ".tmp-strip-src.js"),
   fs.readFileSync(srcAbs, "utf8") + '\nif (typeof module !== "undefined") module.exports = main;');
 const stripped = stripComments(fs.readFileSync(srcAbs, "utf8"));
-fs.writeFileSync(path.join(ROOT, ".tmp-strip-min.js"),
+fs.writeFileSync(path.join(TOOLDIR, ".tmp-strip-min.js"),
   stripped + '\nif (typeof module !== "undefined") module.exports = main;');
 const mainA = require("./.tmp-strip-src.js");
 const mainB = require("./.tmp-strip-min.js");
@@ -112,7 +113,7 @@ for (let k = 0; k < FIXTURES.length; k++) {
 if (stripComments(stripped) !== stripped) throw new Error("idempotency failed: comments remain in output");
 
 fs.writeFileSync(dstAbs, stripped);
-fs.unlinkSync(path.join(ROOT, ".tmp-strip-src.js"));
-fs.unlinkSync(path.join(ROOT, ".tmp-strip-min.js"));
+fs.unlinkSync(path.join(TOOLDIR, ".tmp-strip-src.js"));
+fs.unlinkSync(path.join(TOOLDIR, ".tmp-strip-min.js"));
 console.log("written: " + DST + " (" + stripped.length + " bytes, 行为等价 " +
   FIXTURES.length + "/" + FIXTURES.length + ", 零注释幂等自检通过)");

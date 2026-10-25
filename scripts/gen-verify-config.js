@@ -1,12 +1,13 @@
-// 实机校验配套: 用 override.js 的 main() 生成两份完整配置(JSON),
+// 实机校验配套: 用仓库根目录的 override.js 生成两份完整配置(JSON),
 // 供 mihomo/verge-mihomo -t 做真内核校验。安全模式与 test-override.js 相同:
 // 白名单目标 + 固定临时文件 + 字面量 require, 不使用 eval/动态路径。
-// 用法: node gen-verify-config.js   (输出 verify/config.json 与 verify/config-b.json)
-// 内核校验: mihomo -t -d <含 geosite.dat/geoip.dat 的目录> -f verify/config.json
+// 用法: node scripts/gen-verify-config.js   (输出 verify/config.json 与 verify/config-b.json)
+// 内核校验: mihomo -t -d verify -f verify/config.json
 "use strict";
 const fs = require("fs");
 const path = require("path");
-const ROOT = __dirname;
+const TOOLDIR = __dirname;
+const ROOT = path.resolve(__dirname, "..");
 
 const ALLOWED_TARGETS = ["override.js"];
 const TARGET = "override.js";
@@ -16,7 +17,7 @@ if (!targetAbs.startsWith(ROOT + path.sep)) throw new Error("target outside root
 if (path.basename(targetAbs) !== TARGET) throw new Error("basename mismatch");
 if (!fs.existsSync(targetAbs)) throw new Error("target not found: " + TARGET);
 
-fs.writeFileSync(path.join(ROOT, ".tmp-gen-main.js"),
+fs.writeFileSync(path.join(TOOLDIR, ".tmp-gen-main.js"),
   fs.readFileSync(targetAbs, "utf8") + '\nif (typeof module !== "undefined") module.exports = main;');
 const main = require("./.tmp-gen-main.js");
 
@@ -49,5 +50,5 @@ const cfgB = main(Object.assign({}, BASE, {
 const outDir = path.join(ROOT, "verify");
 fs.writeFileSync(path.join(outDir, "config.json"), JSON.stringify(cfgA, null, 2));
 fs.writeFileSync(path.join(outDir, "config-b.json"), JSON.stringify(cfgB, null, 2));
-fs.unlinkSync(path.join(ROOT, ".tmp-gen-main.js"));
+fs.unlinkSync(path.join(TOOLDIR, ".tmp-gen-main.js"));
 console.log("written: verify/config.json (static), verify/config-b.json (hk-only+provider)");

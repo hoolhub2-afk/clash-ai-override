@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # 隐私泄露扫描: 推送前必跑, 任何命中以非零退出。
-# 禁止模式来自 .privacy-local.txt(仅存在于本地, 永不入库; 缺省时跳过该检查)。
+# 禁止模式来自仓库根目录的 .privacy-local.txt(仅存在于本地, 永不入库; 缺省时跳过)。
 # 引擎本身不含任何真实隐私值, 可安全提交。
+# 用法: bash scripts/privacy-scan.sh
 set -u
-cd "$(dirname "$0")"
+cd "$(dirname "$0")/.."
 fail=0
 
 # 1) 本地禁止清单(姓名/账号/密码/订阅标识等, 一行一条)
