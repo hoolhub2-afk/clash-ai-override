@@ -220,6 +220,19 @@ check("IP-CONS2", "无循环引用: MAIN 引用 AI 时 AI 不得引用 MAIN", ()
   return !!aiG && aiG.proxies.indexOf(MAIN) === -1;
 });
 
+// --- 跨平台: macOS 进程与 Apple fake-ip 白名单 ---
+check("MACOS-1", "macOS 进程名(wpsoffice/WeChatAppEx/BaiduNetdisk)已入直连规则", () => {
+  const { out } = run(M.base, S1_PROXIES, PROVIDERS);
+  const rules = out.rules || [];
+  return ["wpsoffice", "WeChatAppEx", "BaiduNetdisk", "SunloginClient"]
+    .every(p => rules.indexOf("PROCESS-NAME," + p + ",DIRECT") !== -1);
+});
+check("MACOS-2", "fake-ip 白名单含 captive.apple.com 与 +.apple.com", () => {
+  const { out } = run(M.base, S1_PROXIES, PROVIDERS);
+  const f = (out.dns || {})["fake-ip-filter"] || [];
+  return f.indexOf("captive.apple.com") !== -1 && f.indexOf("+.apple.com") !== -1;
+});
+
 // --- 通用不变量 ---
 check("GEN-1", "所有规则目标可解析, MATCH 收尾", () => {
   const { out } = run(M.base, S1_PROXIES, PROVIDERS);

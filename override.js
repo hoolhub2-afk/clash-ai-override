@@ -11,7 +11,7 @@ function main(config) {
   }
 
   var ENABLE_TUN = true;           // 若在客户端界面手动开 TUN，可改 false
-  var LOCK_STRICT_ROUTE = false;   // Windows 下保持 false 防切换节点断流
+  var LOCK_STRICT_ROUTE = false;   // Windows 下保持 false 防切换节点断流; macOS 可改 true 更严谨
   var DOCKER_PORT = 7895;          // Docker 专属代理端口
   var DOCKER_HUB_VIA_PROXY = true; // Docker Hub 拉取开关：true=走容器代理(JP/SG)；
                                    // false=国内直连 docker.io [ISSUE-10] 大陆直连
@@ -91,16 +91,20 @@ function main(config) {
   }
 
   var CN_PROCESSES = [
+    // Windows 进程名
     "WeChat.exe", "Weixin.exe", "WeChatAppEx.exe", "WXWork.exe", "QQ.exe", "TIM.exe",
     "DingTalk.exe", "Feishu.exe", "Lark.exe", "WeMeetApp.exe", "wemeetapp.exe",
     "cloudmusic.exe", "QQMusic.exe", "KuGou.exe", "BaiduNetdisk.exe", "aDrive.exe",
     "Thunder.exe", "DownloadSDKServer.exe", "QQLive.exe", "QQLiveService.exe", "iQIYI.exe", "Youku.exe",
     "AliIM.exe", "AliWorkbench.exe", "WPS.exe", "wps.exe", "SunloginClient.exe", "ToDesk.exe",
-    "WeChat", "企业微信", "QQ", "DingTalk", "Feishu", "Lark", "TencentMeeting",
-    "NeteaseMusic", "QQMusic", "BaiduNetdisk_mac", "aDrive", "Thunder", "ToDesk"
+    // macOS 进程名(与 .exe 名单一一对应, 覆盖微信小程序/办公/网盘/音乐/远程)
+    "WeChat", "WeChatAppEx", "企业微信", "QQ", "DingTalk", "Feishu", "Lark", "TencentMeeting",
+    "NeteaseMusic", "QQMusic", "KuGou", "BaiduNetdisk", "aDrive", "Thunder", "ToDesk",
+    "wpsoffice", "SunloginClient", "iQIYI", "Youku"
   ];
-  // [实测 2026-10-25] Docker Desktop 29.8.2: 镜像拉取由 com.docker.backend.exe 发起,
-  // WSL2 流量经 wslrelay/wslhost 中继; build/dev-envs 进程也会拉基础镜像, 一并覆盖
+  // [实测 2026-10-25] Docker Desktop 29.8.2: 镜像拉取由 com.docker.backend(.exe) 发起
+  // (Windows 带 .exe, macOS 不带), WSL2 流量经 wslrelay/wslhost 中继;
+  // build/dev-envs 进程也会拉基础镜像, 一并覆盖; 两平台名单合并维护
   var DOCKER_PROCESSES = [
     "com.docker.backend.exe", "com.docker.backend", "com.docker.build.exe", "com.docker.dev-envs.exe",
     "vpnkit.exe", "vpnkit-bridge.exe", "com.docker.vpnkit", "wslrelay.exe", "wslhost.exe",
@@ -317,7 +321,9 @@ function main(config) {
     "fake-ip-filter": [
       "*.lan", "*.local", "+.home.arpa", "localhost.ptlogin2.qq.com",
       "+.msftconnecttest.com", "+.msftncsi.com", "+.ntp.org", "time.*.com",
-      "+.stun.*.*", "*.docker.internal"
+      "+.stun.*.*", "*.docker.internal",
+      // [跨平台] macOS 系统联网检测与 App Store/iCloud
+      "captive.apple.com", "+.apple.com"
     ],
     "respect-rules": true,
     "default-nameserver": ["223.5.5.5", "119.29.29.29"],

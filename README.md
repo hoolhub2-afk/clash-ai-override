@@ -60,6 +60,14 @@ mihomo -t -d verify -f verify/config-b.json   # 场景 B: 纯港节点 + provide
 - 本项目与 mihomo / Clash / FlClash / Clash Verge 及配置中提及的任何服务商均无隶属关系;
 - 配置中出现的第三方服务名称与域名仅用于路由规则示例,不代表任何合作或认可。
 
+## 平台说明
+
+一套脚本同时适配 Windows 与 macOS(FlClash / Clash Verge Rev 双端),无需分开维护:
+
+- **Windows**:默认即用;`LOCK_STRICT_ROUTE` 保持 `false`,防切换节点断流。
+- **macOS**:国内应用直连规则使用 macOS 应用进程名(WeChat / wpsoffice / BaiduNetdisk / WeChatAppEx 等,与 Windows 名单合并维护);fake-ip 白名单已加入 `captive.apple.com` 与 `+.apple.com`,避免系统联网检测误判与 App Store / iCloud 异常;首次开 TUN 需在系统弹窗中允许客户端安装辅助工具;macOS 无 Windows 的断流问题,`LOCK_STRICT_ROUTE` 可改为 `true` 获得更严谨的防泄露。
+- 进程名匹配依赖 `find-process-mode: strict`(已内置);两平台共用同一份覆写与同一个 7895 容器端口。
+
 ## 隐私与发布纪律
 
 本仓库禁止出现任何隐私内容:真实姓名、账号、邮箱、密码、订阅信息、真实节点/服务器地址。发布前已做全量审计(文件内容、IP 归属、git 作者/提交者元数据),并固化为可重复执行的推送前检查:
