@@ -45,6 +45,19 @@ mihomo -t -d verify -f verify/config-b.json   # 场景 B: 纯港节点 + provide
 
 `verify/` 内附两份已通过校验的样例配置与 provider 夹具(节点均为文档保留段假地址)。
 
+## 隐私与发布纪律
+
+本仓库禁止出现任何隐私内容:真实姓名、账号、邮箱、密码、订阅信息、真实节点/服务器地址。发布前已做全量审计(文件内容、IP 归属、git 作者/提交者元数据),并固化为可重复执行的推送前检查:
+
+```bash
+bash privacy-scan.sh
+```
+
+- 禁止模式来自 `.privacy-local.txt`(仅存在于本地、已被 `.gitignore` 排除、永不入库;一行一条,自行维护);
+- 提交作者/提交者邮箱必须使用 GitHub noreply 地址;
+- 入库 IPv4 仅允许保留段与公共 DNS 白名单(见扫描脚本),新增地址需同步更新白名单;
+- 新增任何文件后、推送前重跑一次扫描,命中即阻断。
+
 ## 质量流程记录
 
 评审发现 12 条 ISSUE(1 High / 3 Medium / 5 Low / 3 Nit),处置:10 Fixed / 2 Accepted,无延期。关键实机修正:mihomo 监听器 `users` 必须是 `{username, password}` 对象数组,字符串写法会被整份拒绝(`users[0] expected a map, got string`)。原始脚本留档于 [`archive/override-original.js`](archive/override-original.js),仅供对照。

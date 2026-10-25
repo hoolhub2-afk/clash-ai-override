@@ -1,6 +1,8 @@
 # 本地扫描/临时产物
 .mimosa/
 .tmp-*
+# 本地隐私禁止清单(含真实姓名/账号等, 永不入库)
+.privacy-local.txt
 # 内核数据文件(体积大且有独立许可, 运行校验前从客户端目录拷入)
 verify/*.dat
 verify/*.mmdb
