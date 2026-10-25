@@ -13,7 +13,7 @@ FlClash / Clash Verge(mihomo 内核)覆写脚本:**AI 专属分组 + 整机出�
 
 ## 使用
 
-1. 把 [`override.js`](override.js) 全文粘贴进 FlClash 的「覆写」或 Clash Verge 的扩展脚本。
+1. 把 [`override.js`](override.js) 全文粘贴进 FlClash 的「覆写」或 Clash Verge 的扩展脚本;也可以用无注释版 [`override.min.js`](override.min.js)(由 `node strip-comments.js` 从源生成,构建时自动做行为等价与零注释校验,两者任选其一)。
 2. **先把 `PROXY_PASS` 的 `CHANGE_ME` 改成自己的密码**,再保存。
 3. 在「🤖 AI 专属」里选一个节点(手动指定最稳);「🌐 全局代理」保持默认(自动跟随 AI 专属)。
 4. 局域网设备 / Docker 容器接入时: `http://lan:<你的密码>@<本机IP>:7895`(本机自身免密)。
@@ -33,8 +33,11 @@ FlClash / Clash Verge(mihomo 内核)覆写脚本:**AI 专属分组 + 整机出�
 ## 测试与验证
 
 ```bash
-# 结构回归: 17 条断言(空组、规则顺序、循环引用、鉴权字段、过滤器等)
+# 结构回归: 18 条断言(空组、规则顺序、循环引用、鉴权字段、过滤器等)
 node test-override.js
+
+# 构建无注释版 override.min.js(含行为等价 + 零注释幂等自检)
+node strip-comments.js
 
 # 真内核校验: 从 FlClash/Clash Verge 数据目录拷贝 geosite.dat、geoip.dat、
 # Country.mmdb 进 verify/(缺 mmdb 时 GEOIP 规则会尝试联网下载而失败)
