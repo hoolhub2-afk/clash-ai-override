@@ -52,6 +52,7 @@ function check(id, desc, fn) {
 }
 
 const MAIN = "🌐 全局代理", AI = "🤖 AI 专属 (美/日/新/韩)";
+const DOCKER = "🐳 容器专属 (JP/SG)";
 const AI_AUTO = "🤖 AI 自动 (稳态)";
 const AI_TEST_URL = "https://chatgpt.com/cdn-cgi/trace";
 
@@ -162,6 +163,14 @@ check("ISSUE-08", "清单补齐 githubcopilot/notebooklm/huggingface/pplx/charac
   const rules = out.rules || [];
   return ["githubcopilot.com", "notebooklm.google.com", "huggingface.co", "pplx.ai", "character.ai", "sora.com"]
     .every(d => rules.indexOf("DOMAIN-SUFFIX," + d + "," + AI) !== -1);
+});
+
+// --- F2 Docker 进程覆盖加宽 ---
+check("FIX-D2", "build/dev-envs 进程已入容器组规则", () => {
+  const { out } = run(M.base, S1_PROXIES, PROVIDERS);
+  const rules = out.rules || [];
+  return rules.indexOf("PROCESS-NAME,com.docker.build.exe," + DOCKER) !== -1
+    && rules.indexOf("PROCESS-NAME,com.docker.dev-envs.exe," + DOCKER) !== -1;
 });
 
 // --- ISSUE-09 QUIC 阻断误伤私网 ---

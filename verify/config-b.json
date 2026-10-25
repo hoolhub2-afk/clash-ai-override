@@ -199,6 +199,8 @@
     "IN-PORT,7895,🐳 容器专属 (JP/SG)",
     "PROCESS-NAME,com.docker.backend.exe,🐳 容器专属 (JP/SG)",
     "PROCESS-NAME,com.docker.backend,🐳 容器专属 (JP/SG)",
+    "PROCESS-NAME,com.docker.build.exe,🐳 容器专属 (JP/SG)",
+    "PROCESS-NAME,com.docker.dev-envs.exe,🐳 容器专属 (JP/SG)",
     "PROCESS-NAME,vpnkit.exe,🐳 容器专属 (JP/SG)",
     "PROCESS-NAME,vpnkit-bridge.exe,🐳 容器专属 (JP/SG)",
     "PROCESS-NAME,com.docker.vpnkit,🐳 容器专属 (JP/SG)",

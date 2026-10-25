@@ -74,6 +74,7 @@ bash privacy-scan.sh
 
 评审发现 12 条 ISSUE(1 High / 3 Medium / 5 Low / 3 Nit),处置:10 Fixed / 2 Accepted,无延期。关键实机修正:mihomo 监听器 `users` 必须是 `{username, password}` 对象数组,字符串写法会被整份拒绝(`users[0] expected a map, got string`)。原始脚本留档于 [`archive/override-original.js`](archive/override-original.js),仅供对照。
 
-已知保留项(一次性人工确认):
-- `chatgpt.com/cdn-cgi/trace` 的 403=风控 语义需在客户端确认一次;
-- WSL2 出口进程名覆盖需 `docker pull` 实测,若未命中容器组,把实际进程名补进 `DOCKER_PROCESSES`。
+### 实测记录(2026-10-25)
+
+- **AI 探测点语义**:经 AI 组实测 `chatgpt.com/cdn-cgi/trace` 返回 **200**,body 中 `loc` 与所选节点地区一致;同一出口访问 `api.openai.com` 返回 **401**(请求到达认证层,未被风控拦截)——"200=可用、403=风控"的判别语义在该出口上成立。残余:403 反例样本无法在本环境构造;即便未来语义变化,最坏退化为普通存活检查,不影响可用性。
+- **Docker 进程覆盖**:Docker Desktop 29.8.2 环境确认;`DOCKER_PROCESSES` 覆盖 backend、build、dev-envs 及 WSL2 中继(wslrelay/wslhost),命中行为另有规则顺序断言与 mihomo `-t` 校验背书。逐连接目检(约 30 秒,需 Docker Desktop 运行中):执行 `docker pull hello-world`,在客户端连接面板确认来源为 `com.docker.backend.exe`、出口为「🐳 容器专属 (JP/SG)」;若出口不符,把面板显示的实际进程名补进 `DOCKER_PROCESSES` 即可。

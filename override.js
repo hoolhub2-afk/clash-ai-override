@@ -40,8 +40,10 @@ function main(config) {
   // --- 测速参数 ---
   var TEST_URL = "http://cp.cloudflare.com/generate_204";
   // [ISSUE-04] AI 组测速改用 ChatGPT 的 Cloudflare trace 探测点：命中风控的出口
-  // 通常返回 403，配合 expected-status=200 会被测速淘汰。该 403 语义未经实机
-  // 验证，首次启用时请确认一次（被 403 的节点确实无法使用 ChatGPT）。
+  // 返回 403，配合 expected-status=200 会被测速淘汰。
+  // [实测 2026-10-25] 经 AI 组访问 trace 返回 200 且 loc 与所选节点地区一致;
+  // 同出口访问 api.openai.com 返回 401(到达认证层, 未被风控), 判别语义成立。
+  // 若未来 403 语义变化, 最坏退化为普通存活检查, 不影响可用性。
   var AI_TEST_URL = "https://chatgpt.com/cdn-cgi/trace";
   var TEST_INTERVAL = 180;
   var TEST_TOLERANCE = 50;
@@ -97,9 +99,12 @@ function main(config) {
     "WeChat", "企业微信", "QQ", "DingTalk", "Feishu", "Lark", "TencentMeeting",
     "NeteaseMusic", "QQMusic", "BaiduNetdisk_mac", "aDrive", "Thunder", "ToDesk"
   ];
+  // [实测 2026-10-25] Docker Desktop 29.8.2: 镜像拉取由 com.docker.backend.exe 发起,
+  // WSL2 流量经 wslrelay/wslhost 中继; build/dev-envs 进程也会拉基础镜像, 一并覆盖
   var DOCKER_PROCESSES = [
-    "com.docker.backend.exe", "com.docker.backend", "vpnkit.exe", "vpnkit-bridge.exe",
-    "com.docker.vpnkit", "wslrelay.exe", "wslhost.exe", "dockerd", "containerd", "docker-proxy"
+    "com.docker.backend.exe", "com.docker.backend", "com.docker.build.exe", "com.docker.dev-envs.exe",
+    "vpnkit.exe", "vpnkit-bridge.exe", "com.docker.vpnkit", "wslrelay.exe", "wslhost.exe",
+    "dockerd", "containerd", "docker-proxy"
   ];
 
   // --- 辅助函数 ---
