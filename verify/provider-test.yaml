@@ -1,0 +1,33 @@
+# 本地文件型 provider 夹具: 仅供 mihomo -t 校验使用(地址为文档保留段, 不会真实连接)
+# 节点名覆盖: HK(应被 exclude-filter 滤掉)、JP/SG(容器组)、US(AI/优选组)
+proxies:
+  - name: "HK HKG 01"
+    type: ss
+    server: 203.0.113.10
+    port: 8388
+    cipher: aes-128-gcm
+    password: "fixture"
+  - name: "HK 尖沙咀 02"
+    type: ss
+    server: 203.0.113.11
+    port: 8388
+    cipher: aes-128-gcm
+    password: "fixture"
+  - name: "JP Tokyo 01"
+    type: ss
+    server: 203.0.113.12
+    port: 8388
+    cipher: aes-128-gcm
+    password: "fixture"
+  - name: "SG Lion 01"
+    type: ss
+    server: 203.0.113.13
+    port: 8388
+    cipher: aes-128-gcm
+    password: "fixture"
+  - name: "US Los Angeles 01"
+    type: ss
+    server: 203.0.113.14
+    port: 8388
+    cipher: aes-128-gcm
+    password: "fixture"

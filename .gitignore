@@ -1,0 +1,7 @@
+# 本地扫描/临时产物
+.mimosa/
+.tmp-*
+# 内核数据文件(体积大且有独立许可, 运行校验前从客户端目录拷入)
+verify/*.dat
+verify/*.mmdb
+verify/cache.db
