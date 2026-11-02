@@ -13,7 +13,7 @@ FlClash / Clash Verge(mihomo 内核)覆写脚本:**AI 专属分组 + 整机出�
 
 ## 使用
 
-1. 把 [`override.js`](override.js) 全文粘贴进 FlClash 的「覆写」或 Clash Verge 的扩展脚本;也可以用无注释版 [`override.min.js`](override.min.js)(由 `node scripts/strip-comments.js` 从源生成,构建时自动做行为等价与零注释校验,两者任选其一)。
+1. 把 [`override.js`](override.js) 全文粘贴进 FlClash 的「覆写」或 Clash Verge 的扩展脚本;也可以用无注释版 [`override.min.js`](override.min.js)(由 `node scripts/strip-comments.js` 从源生成,构建时自动做行为等价与零注释校验);若需要 Provider 专属独立测速与 Go RE2 正则支持,也可选用加固版 [`override-v1.3.2.js`](override-v1.3.2.js)。
 2. **先把 `PROXY_PASS` 的 `CHANGE_ME` 改成自己的密码**,再保存;没改就加载会直接报错(安全停止),不会用占位密码跑起来。
 3. 在「🤖 AI 专属」里选一个节点(手动指定最稳);「🌐 全局代理」保持默认(自动跟随 AI 专属)。
 4. 局域网设备 / Docker 容器接入时: `http://lan:<你的密码>@<本机IP>:7895`(只有本机回环免密;容器走 `host.docker.internal:7895` 同样要带凭据)。
@@ -31,6 +31,8 @@ FlClash / Clash Verge(mihomo 内核)覆写脚本:**AI 专属分组 + 整机出�
 | `DOCKER_HUB_VIA_PROXY` | `true` | Docker Hub 走 JP/SG 容器代理;`false` 为国内直连(大陆对 registry-1.docker.io 长期不稳定,建议保持 true) |
 | `PROXY_USER` / `PROXY_PASS` | `lan` / `CHANGE_ME` | 局域网与容器接入凭据;**密码必须修改**,仍是占位符时脚本直接报错 |
 | `UNIFY_AI_AND_GLOBAL` | `false` | `true` = 取消 AI 独立分组,AI 域名并入全局 |
+
+*注: 生产加固版 [`override-v1.3.2.js`](override-v1.3.2.js) 额外支持 `INCLUDE_WSL_IN_DOCKER`(默认 `false`, 防误伤通用 WSL2)、`ALLOW_LAN_ACCESS`(默认 `false`, 局域网监听显式放行控制)与 `GLOBAL_ALL`(默认 `false`)开关。*
 
 ## 测试与验证
 
@@ -65,13 +67,16 @@ mihomo -t -d verify -f verify/config-b.json   # 场景 B: 纯港节点 + provide
 ## 仓库结构
 
 ```
-override.js              覆写脚本源码(唯一需要人工维护的文件)
+override.js              覆写脚本源码(主干维护源)
 override.min.js          无注释构建产物(node scripts/strip-comments.js 生成, 勿手改)
-test/test-override.js    结构回归测试(37 条断言)
+override-v1.3.2.js       生产加固版源码(支持 Provider _ai 独立测速与 RE2 正则)
+CLAUDE.md                Claude Code 智能体项目指引与架构规范
+test/test-override.js    结构回归测试(37 条断言, 支持 TEST_TARGET 多目标验证)
 scripts/strip-comments.js       无注释构建工具
 scripts/gen-verify-config.js    真内核校验配置生成
 scripts/privacy-scan.sh         推送前隐私泄露扫描
 verify/                  真内核校验样例配置与 provider 夹具
+specs/reports/           工程评审、修复计划与交付报告归档
 archive/                 原始脚本留档(勿直接使用)
 ```
 
@@ -81,6 +86,7 @@ archive/                 原始脚本留档(勿直接使用)
 
 - **Windows**:默认即用;`LOCK_STRICT_ROUTE` 保持 `false`,防切换节点断流。
 - **macOS**:国内应用直连规则使用 macOS 应用进程名(WeChat / wpsoffice / BaiduNetdisk / WeChatAppEx 等,与 Windows 名单合并维护);fake-ip 白名单已加入 `captive.apple.com` 与 `+.apple.com`,避免系统联网检测误判与 App Store / iCloud 异常;首次开 TUN 需在系统弹窗中允许客户端安装辅助工具;macOS 无 Windows 的断流问题,`LOCK_STRICT_ROUTE` 可改为 `true` 获得更严谨的防泄露。
+- **Linux**:Linux 环境(如 FlClash / Clash Verge Rev Linux 端)原生运行 Docker 时,容器可配置 `--add-host=host.docker.internal:host-gateway` 或通过 `172.17.0.1:7895` 带凭据接入。
 - 进程名匹配依赖 `find-process-mode: strict`(已内置);两平台共用同一份覆写与同一个 7895 容器端口。
 
 ## 隐私与发布纪律
@@ -105,6 +111,23 @@ bash scripts/privacy-scan.sh
 - **AI 探测点语义**:经 AI 组实测 `chatgpt.com/cdn-cgi/trace` 返回 **200**,body 中 `loc` 与所选节点地区一致;同一出口访问 `api.openai.com` 返回 **401**(请求到达认证层,未被风控拦截)——"200=可用、403=风控"的判别语义在该出口上成立。残余:403 反例样本无法在本环境构造;即便未来语义变化,最坏退化为普通存活检查,不影响可用性。
 - **Docker 进程覆盖**:Docker Desktop 29.8.2 环境确认;`DOCKER_PROCESSES` 覆盖 backend、build、dev-envs 及 WSL2 中继(wslrelay/wslhost),命中行为另有规则顺序断言与 mihomo `-t` 校验背书。逐连接目检(约 30 秒,需 Docker Desktop 运行中):执行 `docker pull hello-world`,在客户端连接面板确认来源为 `com.docker.backend.exe`、出口为「🐳 容器专属 (JP/SG)」;若出口不符,把面板显示的实际进程名补进 `DOCKER_PROCESSES` 即可。
 
+### 实测记录(2026-11-02 端到端链路复核)
+
+在真实客户端运行环境中对覆写脚本执行 4 项核心链路验证(公网 IP 与用户标识均已脱敏处理):
+
+1. **国内直连验证**:
+   - 命令: `curl.exe -x "http://127.0.0.1:7890" -s "https://myip.ipip.net"`
+   - 结果: 返回国内本地运营商归属, 证实 `GEOSITE,cn` 与国内直连名单优先级前置生效, 国内流量无多余绕行。
+2. **海外全局分流与优选验证**:
+   - 命令: `curl.exe -x "http://127.0.0.1:7890" -s "https://ipinfo.io/json"`
+   - 结果: 出口落地新加坡(SG)优选节点, 处于预设的优选地区池(`PREFERRED_REGION`)内。
+3. **ChatGPT / AI 专属探测点验证**:
+   - 命令: `curl.exe -x "http://127.0.0.1:7890" -s "https://chatgpt.com/cdn-cgi/trace"`
+   - 结果: 成功返回 HTTP 200 报文(`colo=ICN, loc=KR`), 证实 AI 专属流量精准流向 AI 组(韩国节点)且未触发 Cloudflare 403 风控拦截。
+4. **Docker 7895 专属监听器与 IP 一致性验证**:
+   - 命令: `curl.exe -x "http://127.0.0.1:7895" -s "https://ipinfo.io/json"`
+   - 结果: 出口锁定为新加坡(SG)节点, 且返回的出口公网 IP 与测试 2(全局代理)完全一致, 兑现了“Docker 流量锁定 JP/SG 且整机出口 IP 保持一致”的双重设计目标; 本机 127.0.0.1 回环免密正常通行。
+
 ### 修订记录(2026-10-28)
 
 对桌面改稿做对照复核后合并回仓库,并修掉复核发现的问题:
@@ -119,4 +142,4 @@ bash scripts/privacy-scan.sh
 - **工具链**:开关改为可选第二参数 `options`,测试不再做源码字符串替换(改稿的写法会让 `test-override.js` 直接崩在锚点缺失上);`strip-comments.js` / `gen-verify-config.js` 同步改为注入测试凭据。
 - **规则顺序**:`169.254/16`、`100.64/10`、`GEOSITE,private`、`GEOIP,private` 一并提到 QUIC/DoT 阻断之前。
 
-本轮 `node test/test-override.js` 30 条断言全绿,`override.min.js` 重建通过行为等价与零注释自检;`mihomo -t` 真内核复验需在装有内核的机器上执行(本次复核环境未安装 mihomo)。
+本轮 `node test/test-override.js` 37 条断言全绿,`override.min.js` 重建通过行为等价与零注释自检;`mihomo -t` 真内核复验需在装有内核的机器上执行(本次复核环境未安装 mihomo)。
