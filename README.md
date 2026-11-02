@@ -8,32 +8,34 @@ FlClash / Clash Verge(mihomo 内核)覆写脚本:**AI 专属分组 + 整机出�
 - **AI 分流**:ChatGPT / Claude / Gemini / Grok / Perplexity / Copilot 等 30 个域名走美/日/新/韩专属池;测速探测点用 `chatgpt.com/cdn-cgi/trace`(`expected-status: 200`),命中风控的节点自动淘汰。
 - **Docker 锁定**:7895 专属监听端口 + Docker 进程名的规则排在国内直连之前,容器流量(含国内镜像)强制走 JP/SG。
 - **防泄露**:国内域名走国内 DoH、其余走经代理的境外 DoH(DoH 服务器 IP 锁经代理);阻断海外 QUIC(UDP 443)与 DoT(853)旁路;内网域名交还系统 DNS。
-- **接入安全**:入站鉴权——本机回环与 Docker 内部网段免密,局域网设备必须带凭据,不再是开放代理。
-- **加载健壮**:任何订阅形态(含纯港节点、纯 provider)都不产生空成员组,配置必定可加载;中英文订阅提示节点(到期/Expire/Traffic Reset/流量条)自动过滤。
+- **接入安全**:入站鉴权——只有本机回环免密,局域网设备与 Docker 容器都必须带凭据,不再是开放代理;`PROXY_PASS` 还是占位符时脚本直接报错,不会带着 `CHANGE_ME` 运行。
+- **加载健壮**:任何订阅形态(含纯港节点、纯 provider)都不产生空成员组,配置必定可加载;纯 provider 订阅的「🌐 全局代理」默认落在订阅源测速组上,不会默认直连出网;中英文订阅提示节点(到期/Expire/Traffic Reset/流量条)自动过滤;`DOCKER_PORT` 被别的监听占用时显式报错,不会静默删掉你的配置。
 
 ## 使用
 
 1. 把 [`override.js`](override.js) 全文粘贴进 FlClash 的「覆写」或 Clash Verge 的扩展脚本;也可以用无注释版 [`override.min.js`](override.min.js)(由 `node scripts/strip-comments.js` 从源生成,构建时自动做行为等价与零注释校验,两者任选其一)。
-2. **先把 `PROXY_PASS` 的 `CHANGE_ME` 改成自己的密码**,再保存。
+2. **先把 `PROXY_PASS` 的 `CHANGE_ME` 改成自己的密码**,再保存;没改就加载会直接报错(安全停止),不会用占位密码跑起来。
 3. 在「🤖 AI 专属」里选一个节点(手动指定最稳);「🌐 全局代理」保持默认(自动跟随 AI 专属)。
-4. 局域网设备 / Docker 容器接入时: `http://lan:<你的密码>@<本机IP>:7895`(本机自身免密)。
+4. 局域网设备 / Docker 容器接入时: `http://lan:<你的密码>@<本机IP>:7895`(只有本机回环免密;容器走 `host.docker.internal:7895` 同样要带凭据)。
 5. 提示:覆写重载(改配置、切订阅、重启客户端)可能重置分组的手动选择,重载后到各策略组确认一下当前选中节点。
 
 ## 配置开关
+
+客户端只把订阅配置传给 `main(config)`,所以**改默认值就是改源码里的常量**。函数同时接受可选的第二参数 `options`,同名键会覆盖默认值——它只给单元测试和本地校验用,客户端不会传。
 
 | 常量 | 默认 | 说明 |
 |---|---|---|
 | `ENABLE_TUN` | `true` | 开 TUN;若在客户端界面手动关 TUN,需改 `false` |
 | `LOCK_STRICT_ROUTE` | `false` | Windows 下保持 false,防切换节点断流 |
-| `DOCKER_PORT` | `7895` | Docker 专属混合监听端口 |
+| `DOCKER_PORT` | `7895` | Docker 专属混合监听端口;被其他 listener 占用时脚本报错而不是静默删除 |
 | `DOCKER_HUB_VIA_PROXY` | `true` | Docker Hub 走 JP/SG 容器代理;`false` 为国内直连(大陆对 registry-1.docker.io 长期不稳定,建议保持 true) |
-| `PROXY_USER` / `PROXY_PASS` | `lan` / `CHANGE_ME` | 局域网与容器接入凭据,**密码必须修改** |
+| `PROXY_USER` / `PROXY_PASS` | `lan` / `CHANGE_ME` | 局域网与容器接入凭据;**密码必须修改**,仍是占位符时脚本直接报错 |
 | `UNIFY_AI_AND_GLOBAL` | `false` | `true` = 取消 AI 独立分组,AI 域名并入全局 |
 
 ## 测试与验证
 
 ```bash
-# 结构回归: 20 条断言(空组、规则顺序、循环引用、鉴权字段、过滤器等)
+# 结构回归: 37 条断言(空组、纯 provider 默认出口、凭据 fail closed、端口冲突、Cloudflare 管理面板直连、规则顺序、循环引用、鉴权字段、过滤器等)
 node test/test-override.js
 
 # 构建无注释版 override.min.js(含行为等价 + 零注释幂等自检)
@@ -65,7 +67,7 @@ mihomo -t -d verify -f verify/config-b.json   # 场景 B: 纯港节点 + provide
 ```
 override.js              覆写脚本源码(唯一需要人工维护的文件)
 override.min.js          无注释构建产物(node scripts/strip-comments.js 生成, 勿手改)
-test/test-override.js    结构回归测试(20 条断言)
+test/test-override.js    结构回归测试(37 条断言)
 scripts/strip-comments.js       无注释构建工具
 scripts/gen-verify-config.js    真内核校验配置生成
 scripts/privacy-scan.sh         推送前隐私泄露扫描
@@ -102,3 +104,19 @@ bash scripts/privacy-scan.sh
 
 - **AI 探测点语义**:经 AI 组实测 `chatgpt.com/cdn-cgi/trace` 返回 **200**,body 中 `loc` 与所选节点地区一致;同一出口访问 `api.openai.com` 返回 **401**(请求到达认证层,未被风控拦截)——"200=可用、403=风控"的判别语义在该出口上成立。残余:403 反例样本无法在本环境构造;即便未来语义变化,最坏退化为普通存活检查,不影响可用性。
 - **Docker 进程覆盖**:Docker Desktop 29.8.2 环境确认;`DOCKER_PROCESSES` 覆盖 backend、build、dev-envs 及 WSL2 中继(wslrelay/wslhost),命中行为另有规则顺序断言与 mihomo `-t` 校验背书。逐连接目检(约 30 秒,需 Docker Desktop 运行中):执行 `docker pull hello-world`,在客户端连接面板确认来源为 `com.docker.backend.exe`、出口为「🐳 容器专属 (JP/SG)」;若出口不符,把面板显示的实际进程名补进 `DOCKER_PROCESSES` 即可。
+
+### 修订记录(2026-10-28)
+
+对桌面改稿做对照复核后合并回仓库,并修掉复核发现的问题:
+
+- **纯 provider 订阅默认直连**:`preferredNames` 只统计静态节点,纯 provider 订阅会让「🌐 全局代理」兜底成 `DIRECT` 并默认直连出网。现在新增「⚡ 订阅源自动 (全部)」组(只挂 `exclude-filter`,避免按地区过滤成空组),由它做 MAIN 的首选成员。容器组仍保留 `DIRECT` 兜底:订阅不含 JP/SG 时无法兑现"锁死"语义,此时需在「🐳 容器专属」手动选 provider 节点。
+- **provider 组级测速被移除**:改稿把 `use` 从优选/容器/AI 自动组上去掉,provider 节点不再参与组级测速。已恢复 `use`,与 provider 自身 health-check 并存。
+- **监听器空条目**:改稿的过滤条件保留了 `null` 条目,会让 YAML 解析失败;现在丢弃空/非对象条目。
+- **端口冲突**:`DOCKER_PORT` 被其他 listener 占用时改为显式报错(此前是静默删除该 listener)。
+- **入站鉴权收紧**:`skip-auth-prefixes` 只保留回环,不再对整个 `172.16/12` 与 `192.168.65/24` 免密;容器走 7895 时用 `users` 凭据。
+- **凭据 fail closed**:`PROXY_PASS` 仍是 `CHANGE_ME`、`PROXY_USER` 为空、端口非法时直接报错。
+- **provider health-check 兜底**:缺 `url/interval/timeout/expected-status` 时补默认值,显式 `enable: false` 保留。
+- **工具链**:开关改为可选第二参数 `options`,测试不再做源码字符串替换(改稿的写法会让 `test-override.js` 直接崩在锚点缺失上);`strip-comments.js` / `gen-verify-config.js` 同步改为注入测试凭据。
+- **规则顺序**:`169.254/16`、`100.64/10`、`GEOSITE,private`、`GEOIP,private` 一并提到 QUIC/DoT 阻断之前。
+
+本轮 `node test/test-override.js` 30 条断言全绿,`override.min.js` 重建通过行为等价与零注释自检;`mihomo -t` 真内核复验需在装有内核的机器上执行(本次复核环境未安装 mihomo)。

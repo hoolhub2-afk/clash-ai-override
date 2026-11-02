@@ -10,7 +10,10 @@
       "health-check": {
         "enable": true,
         "url": "http://cp.cloudflare.com/generate_204",
-        "interval": 300
+        "interval": 300,
+        "timeout": 5000,
+        "lazy": true,
+        "expected-status": 204
       }
     }
   },
@@ -18,13 +21,11 @@
   "allow-lan": true,
   "bind-address": "*",
   "authentication": [
-    "lan:CHANGE_ME"
+    "lan:verify-pass"
   ],
   "skip-auth-prefixes": [
     "127.0.0.1/32",
-    "::1/128",
-    "172.16.0.0/12",
-    "192.168.65.0/24"
+    "::1/128"
   ],
   "find-process-mode": "strict",
   "keep-alive-idle": 600,
@@ -45,7 +46,7 @@
       "users": [
         {
           "username": "lan",
-          "password": "CHANGE_ME"
+          "password": "verify-pass"
         }
       ]
     }
@@ -68,7 +69,7 @@
       "name": "🌐 全局代理",
       "type": "select",
       "proxies": [
-        "DIRECT"
+        "⚡ 订阅源自动 (全部)"
       ],
       "use": [
         "sub1"
@@ -98,6 +99,22 @@
       ],
       "filter": "(?i)((Japan|日本|🇯🇵|\\bJP\\b|\\bJPN\\b|Tokyo|Osaka|京都|名古屋|东京|大阪|Singapore|新加坡|狮城|🇸🇬|\\bSG\\b|\\bSGP\\b))",
       "exclude-filter": "(?i)((Hong\\s*Kong|HongKong|香港|🇭🇰|\\bHK\\b|\\bHKG\\b|\\bHKT\\b|\\bHKBN\\b|\\bPCCW\\b|深港|沪港|京港|广港|珠港|Macao|Macau|澳门|🇲🇴|\\bMO\\b|China|中国|大陆|回国|内地|🇨🇳|\\bCN\\b|北京|上海|广州|深圳|杭州|东莞|佛山|珠海|厦门|福州|南京|苏州|成都|重庆|武汉|长沙|郑州|西安|天津|青岛|大连|沈阳|哈尔滨|昆明|南宁|海口|三亚|乌鲁木齐|拉萨|银川|兰州|西宁|呼和浩特|太原|石家庄|济南|合肥|南昌|贵阳|长春)|(到期|剩余|流量|官网|套餐|群|重置|网址|故障|维护|expire|traffic|reset|remaining|days?\\s*left|\\d+(\\.\\d+)?\\s*[tg]b\\b|([2-9]|[1-9]\\d+)(\\.\\d+)?\\s*[xX倍]))"
+    },
+    {
+      "name": "⚡ 订阅源自动 (全部)",
+      "type": "url-test",
+      "url": "http://cp.cloudflare.com/generate_204",
+      "interval": 180,
+      "tolerance": 50,
+      "timeout": 5000,
+      "lazy": true,
+      "hidden": true,
+      "expected-status": 204,
+      "use": [
+        "sub1"
+      ],
+      "exclude-filter": "(?i)((Hong\\s*Kong|HongKong|香港|🇭🇰|\\bHK\\b|\\bHKG\\b|\\bHKT\\b|\\bHKBN\\b|\\bPCCW\\b|深港|沪港|京港|广港|珠港|Macao|Macau|澳门|🇲🇴|\\bMO\\b|China|中国|大陆|回国|内地|🇨🇳|\\bCN\\b|北京|上海|广州|深圳|杭州|东莞|佛山|珠海|厦门|福州|南京|苏州|成都|重庆|武汉|长沙|郑州|西安|天津|青岛|大连|沈阳|哈尔滨|昆明|南宁|海口|三亚|乌鲁木齐|拉萨|银川|兰州|西宁|呼和浩特|太原|石家庄|济南|合肥|南昌|贵阳|长春)|(到期|剩余|流量|官网|套餐|群|重置|网址|故障|维护|expire|traffic|reset|remaining|days?\\s*left|\\d+(\\.\\d+)?\\s*[tg]b\\b|([2-9]|[1-9]\\d+)(\\.\\d+)?\\s*[xX倍]))",
+      "empty-fallback": "REJECT"
     }
   ],
   "dns": {
@@ -193,6 +210,10 @@
     "IP-CIDR,10.0.0.0/8,DIRECT,no-resolve",
     "IP-CIDR,172.16.0.0/12,DIRECT,no-resolve",
     "IP-CIDR,192.168.0.0/16,DIRECT,no-resolve",
+    "IP-CIDR,169.254.0.0/16,DIRECT,no-resolve",
+    "IP-CIDR,100.64.0.0/10,DIRECT,no-resolve",
+    "GEOSITE,private,DIRECT",
+    "GEOIP,private,DIRECT,no-resolve",
     "DOMAIN-SUFFIX,local,DIRECT",
     "DOMAIN-SUFFIX,docker.internal,DIRECT",
     "AND,((NETWORK,UDP),(DST-PORT,443),(NOT,((GEOSITE,cn))),(NOT,((GEOIP,cn)))),REJECT",
@@ -258,7 +279,6 @@
     "PROCESS-NAME,SunloginClient,DIRECT",
     "PROCESS-NAME,iQIYI,DIRECT",
     "PROCESS-NAME,Youku,DIRECT",
-    "GEOSITE,private,DIRECT",
     "GEOSITE,cn,DIRECT",
     "GEOSITE,apple-cn,DIRECT",
     "GEOSITE,microsoft@cn,DIRECT",
@@ -282,7 +302,8 @@
     "DOMAIN-SUFFIX,weibo.com,DIRECT",
     "DOMAIN-SUFFIX,zhihu.com,DIRECT",
     "DOMAIN-SUFFIX,deepseek.com,DIRECT",
-    "GEOIP,private,DIRECT,no-resolve",
+    "DOMAIN-SUFFIX,dash.cloudflare.com,DIRECT",
+    "DOMAIN-SUFFIX,api.cloudflare.com,DIRECT",
     "GEOIP,CN,DIRECT,no-resolve",
     "IP-CIDR,1.1.1.1/32,🌐 全局代理,no-resolve",
     "IP-CIDR,8.8.8.8/32,🌐 全局代理,no-resolve",

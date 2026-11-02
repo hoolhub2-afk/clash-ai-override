@@ -8,11 +8,13 @@ cd "$(dirname "$0")/.."
 fail=0
 
 # 1) 本地禁止清单(姓名/账号/密码/订阅标识等, 一行一条)
+# .mimosa/ 是安全插件的本地报告目录(已 gitignore, 永不入库), 内含本机临时路径,
+# 扫描时排除, 否则每次都会把自己的报告当泄露。
 if [ -f .privacy-local.txt ]; then
   while IFS= read -r pat; do
     [ -z "$pat" ] && continue
     case "$pat" in \#*) continue ;; esac
-    hits=$(grep -rniF -e "$pat" --exclude-dir=.git --exclude=.privacy-local.txt --exclude=privacy-scan.sh . || true)
+    hits=$(grep -rniF -e "$pat" --exclude-dir=.git --exclude-dir=.mimosa --exclude=.privacy-local.txt --exclude=privacy-scan.sh . || true)
     if [ -n "$hits" ]; then
       echo "[LEAK] 命中本地禁止清单: $pat"
       echo "$hits"
@@ -24,7 +26,7 @@ else
 fi
 
 # 2) 邮箱白名单: 仅允许 GitHub noreply 地址
-emails=$(grep -rhoE '\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b' . --exclude-dir=.git --exclude=.privacy-local.txt --exclude=privacy-scan.sh | sort -u)
+emails=$(grep -rhoE '\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b' . --exclude-dir=.git --exclude-dir=.mimosa --exclude=.privacy-local.txt --exclude=privacy-scan.sh | sort -u)
 while IFS= read -r e; do
   [ -z "$e" ] && continue
   case "$e" in
@@ -34,11 +36,13 @@ while IFS= read -r e; do
 done <<< "$emails"
 
 # 3) IPv4 白名单: 仅保留段与公共 DNS
-ips=$(grep -rhoE '\b([0-9]{1,3}\.){3}[0-9]{1,3}\b' . --exclude-dir=.git --exclude=.privacy-local.txt | sort -u)
+ips=$(grep -rhoE '\b([0-9]{1,3}\.){3}[0-9]{1,3}\b' . --exclude-dir=.git --exclude-dir=.mimosa --exclude=.privacy-local.txt | sort -u)
 while IFS= read -r ip; do
   [ -z "$ip" ] && continue
   case "$ip" in
     0.0.0.0|127.*|10.*|192.168.*|198.18.*|198.19.*|1.1.1.1|8.8.8.8|223.5.5.5|119.29.29.29|1.12.12.12) ;;
+    169.254.*) ;;                                   # 链路本地
+    100.6[4-9].*|100.[7-9][0-9].*|100.1[0-1][0-9].*|100.12[0-7].*) ;;  # 100.64/10 CGNAT
     203.0.113.*) ;;
     172.1[6-9].*|172.2*|172.3[01].*) ;;
     *) echo "[LEAK] 非白名单 IP: $ip"; fail=1 ;;

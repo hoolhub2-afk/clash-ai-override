@@ -96,24 +96,36 @@ const FIXTURES = [
   })
 ];
 
-fs.writeFileSync(path.join(TOOLDIR, ".tmp-strip-src.js"),
-  fs.readFileSync(srcAbs, "utf8") + '\nif (typeof module !== "undefined") module.exports = main;');
-const stripped = stripComments(fs.readFileSync(srcAbs, "utf8"));
-fs.writeFileSync(path.join(TOOLDIR, ".tmp-strip-min.js"),
-  stripped + '\nif (typeof module !== "undefined") module.exports = main;');
-const mainA = require("./.tmp-strip-src.js");
-const mainB = require("./.tmp-strip-min.js");
-
-for (let k = 0; k < FIXTURES.length; k++) {
-  const a = JSON.stringify(mainA(JSON.parse(JSON.stringify(FIXTURES[k]))));
-  const b = JSON.stringify(mainB(JSON.parse(JSON.stringify(FIXTURES[k]))));
-  if (a !== b) throw new Error("equivalence failed on fixture #" + k);
+const tmpSrc = path.join(TOOLDIR, ".tmp-strip-src.js");
+const tmpMin = path.join(TOOLDIR, ".tmp-strip-min.js");
+function cleanup() {
+  for (const file of [tmpSrc, tmpMin]) {
+    try { fs.unlinkSync(file); } catch (_) { /* absent */ }
+  }
 }
 
-if (stripComments(stripped) !== stripped) throw new Error("idempotency failed: comments remain in output");
+let stripped;
+try {
+  fs.writeFileSync(tmpSrc,
+    fs.readFileSync(srcAbs, "utf8") + '\nif (typeof module !== "undefined") module.exports = main;');
+  stripped = stripComments(fs.readFileSync(srcAbs, "utf8"));
+  fs.writeFileSync(tmpMin,
+    stripped + '\nif (typeof module !== "undefined") module.exports = main;');
+  const mainA = require("./.tmp-strip-src.js");
+  const mainB = require("./.tmp-strip-min.js");
 
-fs.writeFileSync(dstAbs, stripped);
-fs.unlinkSync(path.join(TOOLDIR, ".tmp-strip-src.js"));
-fs.unlinkSync(path.join(TOOLDIR, ".tmp-strip-min.js"));
+  // 客户端只传 config, 所以 fixture 用 options 注入测试凭据(源码里的占位符会被 fail closed)。
+  const FIXTURE_OPTS = { PROXY_PASS: "fixture-pass" };
+  for (let k = 0; k < FIXTURES.length; k++) {
+    const a = JSON.stringify(mainA(JSON.parse(JSON.stringify(FIXTURES[k])), FIXTURE_OPTS));
+    const b = JSON.stringify(mainB(JSON.parse(JSON.stringify(FIXTURES[k])), FIXTURE_OPTS));
+    if (a !== b) throw new Error("equivalence failed on fixture #" + k);
+  }
+
+  if (stripComments(stripped) !== stripped) throw new Error("idempotency failed: comments remain in output");
+  fs.writeFileSync(dstAbs, stripped);
+} finally {
+  cleanup();
+}
 console.log("written: " + DST + " (" + stripped.length + " bytes, 行为等价 " +
   FIXTURES.length + "/" + FIXTURES.length + ", 零注释幂等自检通过)");

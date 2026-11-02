@@ -17,38 +17,50 @@ if (!targetAbs.startsWith(ROOT + path.sep)) throw new Error("target outside root
 if (path.basename(targetAbs) !== TARGET) throw new Error("basename mismatch");
 if (!fs.existsSync(targetAbs)) throw new Error("target not found: " + TARGET);
 
-fs.writeFileSync(path.join(TOOLDIR, ".tmp-gen-main.js"),
-  fs.readFileSync(targetAbs, "utf8") + '\nif (typeof module !== "undefined") module.exports = main;');
-const main = require("./.tmp-gen-main.js");
+const tmpMain = path.join(TOOLDIR, ".tmp-gen-main.js");
+function cleanup() {
+  try { fs.unlinkSync(tmpMain); } catch (_) { /* absent */ }
+}
 
-function node(name) { return { name: name, type: "ss", server: "203.0.113.1", port: 443, cipher: "aes-128-gcm", password: "fixture" }; }
+let cfgA;
+let cfgB;
+try {
+  fs.writeFileSync(tmpMain,
+    fs.readFileSync(targetAbs, "utf8") + '\nif (typeof module !== "undefined") module.exports = main;');
+  const main = require("./.tmp-gen-main.js");
 
-const BASE = { "mixed-port": 7890, mode: "rule", "log-level": "info" };
+  function node(name) { return { name: name, type: "ss", server: "203.0.113.1", port: 443, cipher: "aes-128-gcm", password: "fixture" }; }
 
-// 场景 A: 常规订阅(静态节点, 美/日/新/韩/港/土混合 + 中英文提示节点)
-const cfgA = main(Object.assign({}, BASE, {
-  proxies: [
-    "HK IEPL 01", "US Los Angeles 01", "US San Jose 02", "JP Tokyo 01",
-    "JP Osaka 02", "SG Lion 01", "KR Seoul 01", "TR Istanbul 01",
-    "剩余流量：10GB", "US Los Angeles 01",
-    "Expire Date: 2027-03-02", "Traffic Reset: 9 Days Left", "221.06 GB | 850 GB"
-  ].map(node)
-}));
+  const BASE = { "mixed-port": 7890, mode: "rule", "log-level": "info" };
+  // 客户端只传 config, 所以这里用 options 注入校验用凭据(源码占位符会被 fail closed)。
+  const OPTS = { PROXY_PASS: "verify-pass" };
 
-// 场景 B: 纯港静态节点 + 本地 file provider(ISSUE-02 的实机复现场景)
-const cfgB = main(Object.assign({}, BASE, {
-  proxies: ["HK HKG 01", "HK 尖沙咀 02"].map(node),
-  "proxy-providers": {
-    sub1: {
-      type: "file",
-      path: "provider-test.yaml",
-      "health-check": { enable: true, url: "http://cp.cloudflare.com/generate_204", interval: 300 }
+  // 场景 A: 常规订阅(静态节点, 美/日/新/韩/港/土混合 + 中英文提示节点)
+  cfgA = main(Object.assign({}, BASE, {
+    proxies: [
+      "HK IEPL 01", "US Los Angeles 01", "US San Jose 02", "JP Tokyo 01",
+      "JP Osaka 02", "SG Lion 01", "KR Seoul 01", "TR Istanbul 01",
+      "剩余流量：10GB", "US Los Angeles 01",
+      "Expire Date: 2027-03-02", "Traffic Reset: 9 Days Left", "221.06 GB | 850 GB"
+    ].map(node)
+  }), OPTS);
+
+  // 场景 B: 纯港静态节点 + 本地 file provider(ISSUE-02 的实机复现场景)
+  cfgB = main(Object.assign({}, BASE, {
+    proxies: ["HK HKG 01", "HK 尖沙咀 02"].map(node),
+    "proxy-providers": {
+      sub1: {
+        type: "file",
+        path: "provider-test.yaml",
+        "health-check": { enable: true, url: "http://cp.cloudflare.com/generate_204", interval: 300 }
+      }
     }
-  }
-}));
+  }), OPTS);
 
-const outDir = path.join(ROOT, "verify");
-fs.writeFileSync(path.join(outDir, "config.json"), JSON.stringify(cfgA, null, 2));
-fs.writeFileSync(path.join(outDir, "config-b.json"), JSON.stringify(cfgB, null, 2));
-fs.unlinkSync(path.join(TOOLDIR, ".tmp-gen-main.js"));
+  const outDir = path.join(ROOT, "verify");
+  fs.writeFileSync(path.join(outDir, "config.json"), JSON.stringify(cfgA, null, 2));
+  fs.writeFileSync(path.join(outDir, "config-b.json"), JSON.stringify(cfgB, null, 2));
+} finally {
+  cleanup();
+}
 console.log("written: verify/config.json (static), verify/config-b.json (hk-only+provider)");

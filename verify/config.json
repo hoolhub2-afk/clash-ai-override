@@ -64,13 +64,11 @@
   "allow-lan": true,
   "bind-address": "*",
   "authentication": [
-    "lan:CHANGE_ME"
+    "lan:verify-pass"
   ],
   "skip-auth-prefixes": [
     "127.0.0.1/32",
-    "::1/128",
-    "172.16.0.0/12",
-    "192.168.65.0/24"
+    "::1/128"
   ],
   "find-process-mode": "strict",
   "keep-alive-idle": 600,
@@ -91,7 +89,7 @@
       "users": [
         {
           "username": "lan",
-          "password": "CHANGE_ME"
+          "password": "verify-pass"
         }
       ]
     }
@@ -198,7 +196,7 @@
       "name": "🤖 AI 自动 (稳态)",
       "type": "fallback",
       "url": "https://chatgpt.com/cdn-cgi/trace",
-      "interval": 180,
+      "interval": 120,
       "timeout": 5000,
       "lazy": true,
       "hidden": true,
@@ -322,6 +320,10 @@
     "IP-CIDR,10.0.0.0/8,DIRECT,no-resolve",
     "IP-CIDR,172.16.0.0/12,DIRECT,no-resolve",
     "IP-CIDR,192.168.0.0/16,DIRECT,no-resolve",
+    "IP-CIDR,169.254.0.0/16,DIRECT,no-resolve",
+    "IP-CIDR,100.64.0.0/10,DIRECT,no-resolve",
+    "GEOSITE,private,DIRECT",
+    "GEOIP,private,DIRECT,no-resolve",
     "DOMAIN-SUFFIX,local,DIRECT",
     "DOMAIN-SUFFIX,docker.internal,DIRECT",
     "AND,((NETWORK,UDP),(DST-PORT,443),(NOT,((GEOSITE,cn))),(NOT,((GEOIP,cn)))),REJECT",
@@ -387,7 +389,6 @@
     "PROCESS-NAME,SunloginClient,DIRECT",
     "PROCESS-NAME,iQIYI,DIRECT",
     "PROCESS-NAME,Youku,DIRECT",
-    "GEOSITE,private,DIRECT",
     "GEOSITE,cn,DIRECT",
     "GEOSITE,apple-cn,DIRECT",
     "GEOSITE,microsoft@cn,DIRECT",
@@ -411,7 +412,8 @@
     "DOMAIN-SUFFIX,weibo.com,DIRECT",
     "DOMAIN-SUFFIX,zhihu.com,DIRECT",
     "DOMAIN-SUFFIX,deepseek.com,DIRECT",
-    "GEOIP,private,DIRECT,no-resolve",
+    "DOMAIN-SUFFIX,dash.cloudflare.com,DIRECT",
+    "DOMAIN-SUFFIX,api.cloudflare.com,DIRECT",
     "GEOIP,CN,DIRECT,no-resolve",
     "IP-CIDR,1.1.1.1/32,🌐 全局代理,no-resolve",
     "IP-CIDR,8.8.8.8/32,🌐 全局代理,no-resolve",
