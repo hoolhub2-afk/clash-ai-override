@@ -47,6 +47,7 @@ function main(config, options) {
   // 大陆直连 registry-1.docker.io 长期不稳定, 保持 true 或改配 Docker daemon 的
   // registry-mirrors, 勿依赖 false 分支
   var DOCKER_HUB_VIA_PROXY = optionValue("DOCKER_HUB_VIA_PROXY", true);
+  var ALLOW_LAN_ACCESS = optionValue("ALLOW_LAN_ACCESS", false);
 
   // [ISSUE-01] 局域网/容器接入凭据：只有本机回环免密；局域网设备与容器需凭据。
   // 容器代理地址写法: http://<PROXY_USER>:<PROXY_PASS>@host.docker.internal:7895
@@ -73,6 +74,13 @@ function main(config, options) {
     throw new Error("安全停止: 请先把 PROXY_PASS 的 CHANGE_ME 替换为非空的随机密码。");
   }
   PROXY_PASS = PROXY_PASS.trim();
+  function isStrongPassword(pw) {
+    return typeof pw === "string" && pw.length >= 8
+      && !/CHANGE_ME|password|123456|admin|default/i.test(pw);
+  }
+  if (ALLOW_LAN_ACCESS && !isStrongPassword(PROXY_PASS)) {
+    throw new Error("安全停止: 开启局域网访问时, PROXY_PASS 必须是至少 8 位且非通用弱密码。");
+  }
   if (typeof PROXY_USER !== "string" || !PROXY_USER.trim()) {
     throw new Error("安全停止: PROXY_USER 必须是非空字符串。");
   }
@@ -253,8 +261,17 @@ function main(config, options) {
 
   // 2) 基础网络与防断流配置 + 开启局域网访问
   config.ipv6 = false;
-  config["allow-lan"] = true;
-  config["bind-address"] = "*";
+  var LAN_READY = ALLOW_LAN_ACCESS;
+  config["allow-lan"] = LAN_READY;
+  config["bind-address"] = LAN_READY ? "0.0.0.0" : "127.0.0.1";
+  if (LAN_READY) {
+    config["lan-allowed-ips"] = [
+      "127.0.0.1/8",
+      "10.0.0.0/8",
+      "172.16.0.0/12",
+      "192.168.0.0/16"
+    ];
+  }
   // [ISSUE-01] 入站鉴权: 只有回环免密。局域网设备、Docker 容器都必须带凭据,
   // 不再对整个 172.16/12 免认证; 容器走 7895 的 docker-in 监听, 那里另有 users。
   config["authentication"] = [PROXY_USER + ":" + PROXY_PASS];
@@ -402,7 +419,7 @@ function main(config, options) {
   // 容器组: 没有 JP/SG 静态节点时 DIRECT 是显式兜底(组内仍通过 use 带出 provider
   // 的 JP/SG 节点, 需要时在「🐳 容器专属」里手动选)。订阅不含 JP/SG 时无法兑现
   // "锁死"语义, 这里不猜地区, 只保证配置能加载。
-  var dockerProxies = (dockerPool.length > 0) ? [DOCKER_AUTO_GROUP].concat(dockerPool) : ["DIRECT"];
+  var dockerProxies = (dockerPool.length > 0) ? [DOCKER_AUTO_GROUP].concat(dockerPool) : ["REJECT"];
 
   var visibleGroups = [
     Object.assign({ name: MAIN_GROUP, type: "select", proxies: globalProxies }, globalProviderFields),

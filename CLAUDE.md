@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Development Commands
 
 - **Run regression tests**: `node test/test-override.js`
-  - Runs all 44 structural and behavioral assertions (fail-closed auth, port collisions, regex filters, empty-fallback coverage, Canada AI pool, Docker Hub rule precedence, provider path derivation, group construction, rule precedence, provider fallback).
+  - Runs all 48 structural and behavioral assertions (fail-closed auth, port collisions, regex filters, empty-fallback coverage, Canada AI pool, Docker Hub rule precedence, provider path derivation, group construction, rule precedence, provider fallback).
   - Uses only Node.js built-ins (`fs`, `path`); no `npm install` or external dependencies required.
 - **Build comment-free bundle**: `node scripts/strip-comments.js`
   - Generates `override.min.js` from `override.js`.
@@ -39,7 +39,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 2. **Filtering & Node Pool Construction**:
    - `REGION_DENY`: Filters HK, MO, and mainland China regions from foreign proxy pools.
    - `INFO_DENY`: Filters both Chinese and English subscription notice/metadata nodes (e.g. traffic remaining, expiration dates).
-   - Pools: `PREFERRED_REGION` (US, JP, SG, KR), `AI_ALLOW` (US, JP, SG, KR), `DOCKER_ALLOW` (JP, SG).
+   - Pools: `PREFERRED_REGION` (US, JP, SG, KR, CA), `AI_ALLOW` (US, JP, SG, KR, CA), `DOCKER_ALLOW` (JP, SG).
 3. **Proxy Groups Creation**:
    - `🌐 全局代理` (MAIN): Defaults to following the AI dedicated group for IP consistency.
    - `🤖 AI 专属 (美/日/新/韩/加)` & `🤖 AI 自动 (稳态)`: Fallback strategy group using `https://chatgpt.com/cdn-cgi/trace` (`expected-status: 200`) for risk-control survival checks.

@@ -94,6 +94,9 @@ function main(config, options) {
     throw new Error("安全停止: 请先把 PROXY_PASS 的 CHANGE_ME 替换为非空的随机密码。");
   }
   PROXY_PASS = PROXY_PASS.trim();
+  if (ALLOW_LAN_ACCESS && !isStrongPassword(PROXY_PASS)) {
+    throw new Error("安全停止: 开启局域网访问时, PROXY_PASS 必须是至少 8 位且非通用弱密码。");
+  }
   if (typeof PROXY_USER !== "string" || !PROXY_USER.trim()) {
     throw new Error("安全停止: PROXY_USER 必须是非空字符串。");
   }
@@ -239,6 +242,9 @@ function main(config, options) {
   var aiProviderNames = [];
   if (hasProviders) {
     var nextProviders = {};
+    Object.keys(rawProviders).filter(function(k) { return /_ai$/.test(k); }).forEach(function(k) {
+      nextProviders[k] = rawProviders[k];
+    });
     for (var i = 0; i < baseProviderNames.length; i++) {
       var pName = baseProviderNames[i];
       var pConf = rawProviders[pName];
@@ -258,6 +264,9 @@ function main(config, options) {
 
       if (!UNIFY_AI_AND_GLOBAL) {
         var aiPName = pName + "_ai";
+        if (hasOwn.call(rawProviders, aiPName)) {
+          throw new Error("Provider 名称冲突: " + aiPName + " 已存在, 无法派生 AI Provider。");
+        }
         var aiHc = Object.assign({
           enable: true,
           url: AI_TEST_URL,
@@ -444,7 +453,7 @@ function main(config, options) {
   if (globalProxies.length === 0 && baseProviderNames.length === 0) globalProxies = ["DIRECT"];
 
   var aiProxies = aiPool.length > 0 ? [AI_AUTO_GROUP].concat(aiPool) : [MAIN_GROUP];
-  var dockerProxies = dockerPool.length > 0 ? [DOCKER_AUTO_GROUP].concat(dockerPool) : [MAIN_GROUP, "DIRECT"];
+  var dockerProxies = dockerPool.length > 0 ? [DOCKER_AUTO_GROUP].concat(dockerPool) : ["REJECT"];
 
   var visibleGroups = [
     Object.assign({ name: MAIN_GROUP, type: "select", proxies: globalProxies }, globalProviderFields),

@@ -18,8 +18,8 @@
     }
   },
   "ipv6": false,
-  "allow-lan": true,
-  "bind-address": "*",
+  "allow-lan": false,
+  "bind-address": "127.0.0.1",
   "authentication": [
     "lan:verify-pass"
   ],
@@ -94,7 +94,7 @@
       "name": "🐳 容器专属 (JP/SG)",
       "type": "select",
       "proxies": [
-        "DIRECT"
+        "REJECT"
       ],
       "use": [
         "sub1"

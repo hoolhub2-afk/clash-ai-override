@@ -69,8 +69,8 @@
     }
   ],
   "ipv6": false,
-  "allow-lan": true,
-  "bind-address": "*",
+  "allow-lan": false,
+  "bind-address": "127.0.0.1",
   "authentication": [
     "lan:verify-pass"
   ],

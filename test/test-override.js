@@ -99,6 +99,15 @@ check("AUTH-2", "skip-auth-prefixes 只含回环, 不再对整个 172.16/12 免�
   return Array.isArray(skip) && skip.length === 2
     && skip.indexOf("172.16.0.0/12") === -1 && skip.indexOf("192.168.65.0/24") === -1;
 });
+check("LAN-DEFAULT", "默认不开放局域网监听, 显式开关才绑定 0.0.0.0", () => {
+  const local = run(S1_PROXIES, PROVIDERS).out;
+  const lan = run(S1_PROXIES, PROVIDERS, { ALLOW_LAN_ACCESS: true, PROXY_PASS: "strong-pass-9" }).out;
+  return local["allow-lan"] === false && local["bind-address"] === "127.0.0.1"
+    && lan["allow-lan"] === true && lan["bind-address"] === "0.0.0.0";
+});
+check("LAN-WEAK", "局域网开关拒绝通用弱密码", () => {
+  return throwsWith(() => main({ proxies: [node("US 01")] }, opts({ ALLOW_LAN_ACCESS: true, PROXY_PASS: "password" })), /弱密码/);
+});
 
 // --- 凭据 fail closed ---
 check("PW-1", "未替换 CHANGE_ME 时直接报错, 不生成弱密码配置", () => {
@@ -230,6 +239,14 @@ check("FILE-PROVIDER-PATH", "file 型 provider 派生实例不得指向不存在
   return derived.every(k => p[k].path === "provider-test.yaml")
     && (!p.sub1_ai || p.sub1_ai["health-check"].url === AI_TEST_URL);
 });
+check("PROV-COLLISION", "已有 _ai Provider 时拒绝派生名称冲突", () => {
+  const providers = {
+    sub1: { type: "file", path: "provider-test.yaml" },
+    sub1_ai: { type: "file", path: "custom-ai.yaml" }
+  };
+  return TARGET === "override.js"
+    || throwsWith(() => run([], providers), /Provider 名称冲突/);
+});
 check("HC-1", "provider health-check 补默认值且保留显式 enable:false", () => {
   const providers = {
     sub1: { type: "http", url: "https://example.com/sub", "health-check": { enable: false, interval: 300 } }
@@ -262,6 +279,11 @@ check("ISSUE-05", "无 AI 地区节点时 AI 组回退 MAIN, 不混入其他地�
   const { out } = run(["HK 01", "TR Istanbul 01"].map(node));
   const g = findGroup(out["proxy-groups"] || [], AI);
   return !!g && g.proxies.join("|") === MAIN;
+});
+check("DOCKER-FAIL-CLOSED", "无 JP/SG 节点时 Docker 组拒绝流量而不直连", () => {
+  const { out } = run(["TR Istanbul 01"].map(node));
+  const g = findGroup(out["proxy-groups"] || [], DOCKER);
+  return !!g && Array.isArray(g.proxies) && g.proxies.length === 1 && g.proxies[0] === "REJECT";
 });
 
 // --- ISSUE-06 内网 DNS 被劫持 ---
