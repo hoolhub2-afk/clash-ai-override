@@ -76,7 +76,6 @@ scripts/strip-comments.js       无注释构建工具
 scripts/gen-verify-config.js    真内核校验配置生成
 scripts/privacy-scan.sh         推送前隐私泄露扫描
 verify/                  真内核校验样例配置与 provider 夹具
-specs/reports/           工程评审、修复计划与交付报告归档
 archive/                 原始脚本留档(勿直接使用)
 ```
 
