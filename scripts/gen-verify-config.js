@@ -35,11 +35,11 @@ try {
   // 客户端只传 config, 所以这里用 options 注入校验用凭据(源码占位符会被 fail closed)。
   const OPTS = { PROXY_PASS: "verify-pass" };
 
-  // 场景 A: 常规订阅(静态节点, 美/日/新/韩/港/土混合 + 中英文提示节点)
+  // 场景 A: 常规订阅(静态节点, 美/日/新/韩/加/港/土混合 + 中英文提示节点)
   cfgA = main(Object.assign({}, BASE, {
     proxies: [
       "HK IEPL 01", "US Los Angeles 01", "US San Jose 02", "JP Tokyo 01",
-      "JP Osaka 02", "SG Lion 01", "KR Seoul 01", "TR Istanbul 01",
+      "JP Osaka 02", "SG Lion 01", "KR Seoul 01", "CA Toronto 01", "TR Istanbul 01",
       "剩余流量：10GB", "US Los Angeles 01",
       "Expire Date: 2027-03-02", "Traffic Reset: 9 Days Left", "221.06 GB | 850 GB"
     ].map(node)

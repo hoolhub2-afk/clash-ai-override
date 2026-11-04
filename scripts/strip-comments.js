@@ -83,7 +83,7 @@ const FIXTURES = [
   Object.assign({}, BASE, {
     proxies: [
       "HK IEPL 01", "US Los Angeles 01", "US San Jose 02", "JP Tokyo 01",
-      "JP Osaka 02", "SG Lion 01", "KR Seoul 01", "TR Istanbul 01",
+      "JP Osaka 02", "SG Lion 01", "KR Seoul 01", "CA Toronto 01", "TR Istanbul 01",
       "剩余流量：10GB", "Expire Date: 2027-03-02", "Traffic Reset: 9 Days Left", "221.06 GB | 850 GB"
     ].map(node)
   }),

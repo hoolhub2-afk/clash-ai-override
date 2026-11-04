@@ -53,10 +53,10 @@ function main(config, options) {
   var PROXY_PASS = optionValue("PROXY_PASS", "CHANGE_ME");
 
   var MAIN_GROUP = "🌐 全局代理";
-  var AI_GROUP = "🤖 AI 专属 (美/日/新/韩)";
+  var AI_GROUP = "🤖 AI 专属 (美/日/新/韩/加)";
   var AI_AUTO_GROUP = "🤖 AI 自动 (稳态)";
   var DOCKER_AUTO_GROUP = "🐳 容器自动测速";
-  var BEST_AUTO_GROUP = "⚡ 优选自动 (美/日/新/韩)";
+  var BEST_AUTO_GROUP = "⚡ 优选自动 (美/日/新/韩/加)";
   var BEST_FALLBACK_AUTO_GROUP = "⚡ 备用自动 (其他地区)";
   var BEST_FAILOVER_GROUP = "⚡ 全局故障回退";
   var PROVIDER_AUTO_GROUP = "⚡ 订阅源自动 (全部)";
@@ -119,21 +119,22 @@ function main(config, options) {
   }
 
   // ==================== 3. 统一地区与过滤正则词库 ====================
-  var REGION_DENY = /(Hong\s*Kong|HongKong|香港|🇭🇰|(?:^|[^a-zA-Z])(HK|HKG|HKT|HKBN|PCCW|CN)(?:$|[^a-zA-Z])|深港|沪港|京港|广港|珠港|港台|深台|沪台|京台|广台|Macao|Macau|澳门|🇲🇴|China|中国|大陆|回国|内地|🇨🇳|北京|上海|广州|深圳|杭州|东莞|佛山|珠海|厦门|福州|南京|苏州|成都|重庆|武汉|长沙|郑州|西安|天津|青岛|大连|沈阳|哈尔滨|昆明|南宁|海口|三亚|乌鲁木齐|拉萨|银川|兰州|西宁|呼和浩特|太原|石家庄|济南|合肥|南昌|贵阳|长春)/i;
+  var REGION_DENY = /(Hong\s*Kong|HongKong|香港|🇭🇰|(?:^|[^a-zA-Z])(HK|HKG|HKT|HKBN|PCCW)(?:$|[^a-zA-Z])|(?:^|[^a-zA-Z0-9])CN(?:$|[^a-zA-Z0-9])|深港|沪港|京港|广港|珠港|港台|深台|沪台|京台|广台|Macao|Macau|澳门|🇲🇴|China|中国|大陆|回国|内地|🇨🇳|北京|上海|广州|深圳|杭州|东莞|佛山|珠海|厦门|福州|南京|苏州|成都|重庆|武汉|长沙|郑州|西安|天津|青岛|大连|沈阳|哈尔滨|昆明|南宁|海口|三亚|乌鲁木齐|拉萨|银川|兰州|西宁|呼和浩特|太原|石家庄|济南|合肥|南昌|贵阳|长春)/i;
 
   // Go RE2 兼容黑名单：拦截纯大陆节点并放行中国台湾
-  var PROVIDER_REGION_DENY = /(Hong\s*Kong|HongKong|香港|🇭🇰|(?:^|[^a-zA-Z])(HK|HKG|HKT|HKBN|PCCW|CN)(?:$|[^a-zA-Z])|深港|沪港|京港|广港|珠港|港台|深台|沪台|京台|广台|Macao|Macau|澳门|🇲🇴|大陆|回国|内地|(?:中国|China)(?:$|[\s\-_\/|]*(?:大陆|内地|移动|联通|电信|BGP|专线|直连|节点|\d+))|北京|上海|广州|深圳|杭州|东莞|佛山|珠海|厦门|福州|南京|苏州|成都|重庆|武汉|长沙|郑州|西安|天津|青岛|大连|沈阳|哈尔滨|昆明|南宁|海口|三亚|乌鲁木齐|拉萨|银川|兰州|西宁|呼和浩特|太原|石家庄|济南|合肥|南昌|贵阳|长春)/i;
+  var PROVIDER_REGION_DENY = /(Hong\s*Kong|HongKong|香港|🇭🇰|(?:^|[^a-zA-Z])(HK|HKG|HKT|HKBN|PCCW)(?:$|[^a-zA-Z])|(?:^|[^a-zA-Z0-9])CN(?:$|[^a-zA-Z0-9])|深港|沪港|京港|广港|珠港|港台|深台|沪台|京台|广台|Macao|Macau|澳门|🇲🇴|大陆|回国|内地|(?:中国|China)(?:$|[\s\-_\/|]*(?:大陆|内地|移动|联通|电信|BGP|专线|直连|节点|\d+))|北京|上海|广州|深圳|杭州|东莞|佛山|珠海|厦门|福州|南京|苏州|成都|重庆|武汉|长沙|郑州|西安|天津|青岛|大连|沈阳|哈尔滨|昆明|南宁|海口|三亚|乌鲁木齐|拉萨|银川|兰州|西宁|呼和浩特|太原|石家庄|济南|合肥|南昌|贵阳|长春)/i;
 
   var INFO_DENY = /(到期|剩余|流量|官网|套餐|群|重置|网址|故障|维护|expire|traffic|reset|remaining|days?\s*left|\d+(\.\d+)?\s*[tg]b\b|([2-9]|[1-9]\d+)(\.\d+)?\s*[xX倍])/i;
   var TAIWAN_MARK = /(Taiwan|Taipei|Taichung|Kaohsiung|台湾|台灣|台北|台中|高雄|新北|桃园|台南|新竹|🇹🇼|(?:^|[^a-zA-Z])(TW|TWN|TPE)(?:$|[^a-zA-Z]))/i;
 
-  // 四大优选地区原子正则
+  // 五大优选地区原子正则
   var SG_MATCH = /(Singapore|新加坡|狮城|🇸🇬|(?:^|[^a-zA-Z])(SG|SGP)(?:$|[^a-zA-Z]))/i;
   var JP_MATCH = /(Japan|日本|东京|大阪|京都|名古屋|福冈|札幌|横滨|🇯🇵|(?:^|[^a-zA-Z])(JP|JPN)(?:$|[^a-zA-Z])|Tokyo|Osaka|Kyoto|Nagoya|Fukuoka|Sapporo|Yokohama)/i;
   var KR_MATCH = /(Korea|韩国|首尔|釜山|仁川|🇰🇷|(?:^|[^a-zA-Z])(KR|KOR|ICN)(?:$|[^a-zA-Z])|Seoul|Busan|Incheon)/i;
   var US_MATCH = /(United\s*States|美国|洛杉矶|圣何塞|旧金山|西雅图|纽约|达拉斯|硅谷|芝加哥|波特兰|凤凰城|华盛顿|迈阿密|亚特兰大|丹佛|🇺🇸|(?:^|[^a-zA-Z])(US|USA|LAX|SJC|SFO|SEA|JFK|EWR|DFW|ORD|PDX|PHX|IAD|MIA)(?:$|[^a-zA-Z])|Los\s*Angeles|San\s*Jose|San\s*Francisco|Seattle|New\s*York|Dallas|Silicon\s*Valley|Chicago|Portland|Phoenix|Washington|Miami|Atlanta|Denver)/i;
+  var CA_MATCH = /(Canada|Canadian|加拿大|🇨🇦|(?:^|[^a-zA-Z])(CA|CAN)(?:$|[^a-zA-Z])|Toronto|多伦多|Vancouver|温哥华|Montreal|蒙特利尔|Ottawa|渥太华|Calgary|卡尔加里)/i;
 
-  var PREFERRED_REGION = new RegExp("(" + SG_MATCH.source + "|" + JP_MATCH.source + "|" + KR_MATCH.source + "|" + US_MATCH.source + ")", "i");
+  var PREFERRED_REGION = new RegExp("(" + SG_MATCH.source + "|" + JP_MATCH.source + "|" + KR_MATCH.source + "|" + US_MATCH.source + "|" + CA_MATCH.source + ")", "i");
   var AI_ALLOW = PREFERRED_REGION;
   var DOCKER_ALLOW = new RegExp("(" + JP_MATCH.source + "|" + SG_MATCH.source + ")", "i");
 
@@ -164,9 +165,6 @@ function main(config, options) {
     "aliyun.com", "aliyuncs.com", "163.com", "126.net", "bilibili.com",
     "hdslb.com", "jd.com", "douyin.com", "weibo.com", "zhihu.com", "deepseek.com"
   ];
-  if (!DOCKER_HUB_VIA_PROXY) {
-    CN_DOMAINS.push("docker.io", "registry-1.docker.io");
-  }
 
   var CN_PROCESSES = [
     "WeChat.exe", "Weixin.exe", "WeChatAppEx.exe", "WXWork.exe", "QQ.exe", "TIM.exe",
@@ -198,7 +196,7 @@ function main(config, options) {
     if (TAIWAN_MARK.test(name)) {
       var cleaned = name
         .replace(/(🇨🇳|中国|China)/gi, " ")
-        .replace(/(?:^|[^a-zA-Z])CN(?:$|[^a-zA-Z])/gi, " ");
+        .replace(/(?:^|[^a-zA-Z0-9])CN(?:$|[^a-zA-Z0-9])/gi, " ");
       return REGION_DENY.test(cleaned);
     }
     return REGION_DENY.test(name);
@@ -271,7 +269,10 @@ function main(config, options) {
         var aiPConf = Object.assign({}, pConf, {
           "health-check": aiHc
         });
-        if (typeof pConf.path === "string" && pConf.path.trim()) {
+        // file 型 provider 的 path 是节点来源, 派生实例复用同一文件即可;
+        // 改成 <name>_ai 会指向不存在的路径, 令 AI 组的 use 落到空节点池。
+        // http 型 provider 的 path 是下载缓存, 两个实例需分开避免互相覆盖。
+        if (pConf.type === "http" && typeof pConf.path === "string" && pConf.path.trim()) {
           aiPConf.path = pConf.path.replace(/(\.[a-zA-Z0-9]+)?$/, "_ai$1");
         }
         nextProviders[aiPName] = aiPConf;
@@ -577,7 +578,11 @@ function main(config, options) {
     ]
   );
 
+  // Docker Hub 直连例外必须排在 baseHeadRules 的 IN-PORT 捕获之前,
+  // 否则容器流量先被锁进容器组, DOCKER_HUB_VIA_PROXY=false 不会生效。
+  var dockerHubDirectRules = DOCKER_HUB_VIA_PROXY ? [] : suffix(["docker.io", "registry-1.docker.io"], "DIRECT");
   config.rules = [].concat(
+    dockerHubDirectRules,
     baseHeadRules,
     dockerProcessRules,
     GLOBAL_ALL ? [] : domesticDirectRules,

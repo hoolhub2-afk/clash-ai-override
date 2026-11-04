@@ -38,10 +38,10 @@ function check(id, desc, fn) {
   }
 }
 
-const MAIN = "🌐 全局代理", AI = "🤖 AI 专属 (美/日/新/韩)";
+const MAIN = "🌐 全局代理", AI = "🤖 AI 专属 (美/日/新/韩/加)";
 const DOCKER = "🐳 容器专属 (JP/SG)";
 const AI_AUTO = "🤖 AI 自动 (稳态)";
-const BEST_AUTO = "⚡ 优选自动 (美/日/新/韩)";
+const BEST_AUTO = "⚡ 优选自动 (美/日/新/韩/加)";
 const PROVIDER_AUTO = "⚡ 订阅源自动 (全部)";
 const AI_TEST_URL = "https://chatgpt.com/cdn-cgi/trace";
 
@@ -194,6 +194,42 @@ check("PROV-2", "有静态节点时 provider 仍参与组级测速(use 未被移
   const g = findGroup(out["proxy-groups"] || [], BEST_AUTO);
   return !!g && Array.isArray(g.use) && g.use.indexOf("sub1") !== -1 && !!g.filter;
 });
+check("EMPTY-FALLBACK", "静态节点+provider: 所有挂 use 的组都拒绝空池回退", () => {
+  const { out } = run(S1_PROXIES, PROVIDERS);
+  const withUse = (out["proxy-groups"] || []).filter(g => Array.isArray(g.use) && g.use.length > 0);
+  return withUse.length > 0 && withUse.every(g => g["empty-fallback"] === "REJECT");
+});
+check("CA-AI-POOL", "加拿大节点进入 AI 专属/优选组, 不进入 Docker 组", () => {
+  const ca = ["CA Toronto 01", "🇨🇦 Vancouver 02", "加拿大 蒙特利尔 03", "CAN Calgary 04"];
+  const { out } = run(ca.concat(["JP Tokyo 01"]).map(node), PROVIDERS);
+  const ai = findGroup(out["proxy-groups"] || [], AI);
+  const docker = findGroup(out["proxy-groups"] || [], DOCKER);
+  const names = (out.proxies || []).map(p => p.name);
+  return ca.every(n => names.indexOf(n) !== -1)
+    && !!ai && ca.every(n => ai.proxies.indexOf(n) !== -1)
+    && !!docker && ca.every(n => docker.proxies.indexOf(n) === -1)
+    && out.rules.indexOf("DOMAIN-SUFFIX,claude.ai," + AI) !== -1;
+});
+check("CA-FILTER", "加拿大节点未被地区黑名单误杀, 港/大陆节点仍被过滤", () => {
+  const { out } = run(["CA Toronto 01", "加拿大 温哥华 02", "US CN2 GIA 01", "HK IEPL 01", "北京 01"].map(node));
+  const names = (out.proxies || []).map(p => p.name);
+  return ["CA Toronto 01", "加拿大 温哥华 02", "US CN2 GIA 01"].every(n => names.indexOf(n) !== -1)
+    && names.indexOf("HK IEPL 01") === -1 && names.indexOf("北京 01") === -1;
+});
+check("CN2-REGRESSION", "美国 CN2 节点不被 CN 缩写过滤误杀, HK 节点仍被过滤", () => {
+  const { out } = run(["US CN2 GIA 01", "US cn2 gia 02", "HK IEPL 01", "JP Tokyo 01"].map(node));
+  const names = (out.proxies || []).map(p => p.name);
+  return ["US CN2 GIA 01", "US cn2 gia 02", "JP Tokyo 01"].every(n => names.indexOf(n) !== -1)
+    && names.indexOf("HK IEPL 01") === -1;
+});
+check("FILE-PROVIDER-PATH", "file 型 provider 派生实例不得指向不存在的节点文件", () => {
+  const providers = { sub1: { type: "file", path: "provider-test.yaml" } };
+  const { out } = run([], providers);
+  const p = out["proxy-providers"] || {};
+  const derived = Object.keys(p).filter(k => k !== "sub1");
+  return derived.every(k => p[k].path === "provider-test.yaml")
+    && (!p.sub1_ai || p.sub1_ai["health-check"].url === AI_TEST_URL);
+});
 check("HC-1", "provider health-check 补默认值且保留显式 enable:false", () => {
   const providers = {
     sub1: { type: "http", url: "https://example.com/sub", "health-check": { enable: false, interval: 300 } }
@@ -274,6 +310,22 @@ check("ISSUE-09", "私网直连先于 QUIC/DoT 阻断", () => {
 check("ISSUE-10", "DOCKER_HUB_VIA_PROXY=false 时 docker.io 直连行为保留", () => {
   const { out } = run(S1_PROXIES, PROVIDERS, { DOCKER_HUB_VIA_PROXY: false });
   return (out.rules || []).indexOf("DOMAIN-SUFFIX,docker.io,DIRECT") !== -1;
+});
+check("HUB-ORDER", "false 时 Docker Hub 直连规则早于 IN-PORT 与 Docker 进程规则", () => {
+  const { out } = run(S1_PROXIES, PROVIDERS, { DOCKER_HUB_VIA_PROXY: false });
+  const rules = out.rules || [];
+  const hub = idxOf(rules, "DOMAIN-SUFFIX,docker.io,DIRECT");
+  const hubReg = idxOf(rules, "DOMAIN-SUFFIX,registry-1.docker.io,DIRECT");
+  const inPort = idxOf(rules, "IN-PORT,7895");
+  const proc = idxOf(rules, "PROCESS-NAME,com.docker.backend.exe");
+  return hub !== -1 && hubReg !== -1 && inPort !== -1 && proc !== -1
+    && hub < inPort && hub < proc && hubReg < inPort && hubReg < proc;
+});
+check("HUB-DEFAULT", "true 时不存在 Docker Hub 直连例外", () => {
+  const { out } = run(S1_PROXIES, PROVIDERS);
+  const rules = out.rules || [];
+  return idxOf(rules, "DOMAIN-SUFFIX,docker.io,DIRECT") === -1
+    && idxOf(rules, "DOMAIN-SUFFIX,registry-1.docker.io,DIRECT") === -1;
 });
 check("CF-DIRECT", "Cloudflare 管理面板/API 直连且早于海外代理兜底", () => {
   const { out } = run(S1_PROXIES, PROVIDERS);

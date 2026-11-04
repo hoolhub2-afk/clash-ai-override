@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Development Commands
 
 - **Run regression tests**: `node test/test-override.js`
-  - Runs all 37 structural and behavioral assertions (fail-closed auth, port collisions, regex filters, group construction, rule precedence, provider fallback).
+  - Runs all 44 structural and behavioral assertions (fail-closed auth, port collisions, regex filters, empty-fallback coverage, Canada AI pool, Docker Hub rule precedence, provider path derivation, group construction, rule precedence, provider fallback).
   - Uses only Node.js built-ins (`fs`, `path`); no `npm install` or external dependencies required.
 - **Build comment-free bundle**: `node scripts/strip-comments.js`
   - Generates `override.min.js` from `override.js`.
@@ -42,7 +42,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
    - Pools: `PREFERRED_REGION` (US, JP, SG, KR), `AI_ALLOW` (US, JP, SG, KR), `DOCKER_ALLOW` (JP, SG).
 3. **Proxy Groups Creation**:
    - `🌐 全局代理` (MAIN): Defaults to following the AI dedicated group for IP consistency.
-   - `🤖 AI 专属 (美/日/新/韩)` & `🤖 AI 自动 (稳态)`: Fallback strategy group using `https://chatgpt.com/cdn-cgi/trace` (`expected-status: 200`) for risk-control survival checks.
+   - `🤖 AI 专属 (美/日/新/韩/加)` & `🤖 AI 自动 (稳态)`: Fallback strategy group using `https://chatgpt.com/cdn-cgi/trace` (`expected-status: 200`) for risk-control survival checks.
    - `🐳 容器专属 (JP/SG)` & `🐳 容器自动测速`: Dedicated egress for Docker containers.
    - `⚡ 优选自动`, `⚡ 备用自动`, `⚡ 全局故障回退`, `⚡ 订阅源自动 (全部)`: Provider and failover groups. Empty provider groups must include `empty-fallback: REJECT` to prevent silent fallback to DIRECT.
 4. **DNS & Sniffer Configuration**:

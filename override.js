@@ -104,10 +104,10 @@ function main(config, options) {
 
   // --- 策略组名称 --- [ISSUE-11] 已删除未使用的 HARK/MANUAL/IP_CHECK/BEST_GLOBAL 四个常量
   var MAIN_GROUP = "🌐 全局代理";
-  var AI_GROUP = "🤖 AI 专属 (美/日/新/韩)";
+  var AI_GROUP = "🤖 AI 专属 (美/日/新/韩/加)";
   var AI_AUTO_GROUP = "🤖 AI 自动 (稳态)";
   var DOCKER_AUTO_GROUP = "🐳 容器自动测速";
-  var BEST_AUTO_GROUP = "⚡ 优选自动 (美/日/新/韩)";
+  var BEST_AUTO_GROUP = "⚡ 优选自动 (美/日/新/韩/加)";
   var BEST_FALLBACK_AUTO_GROUP = "⚡ 备用自动 (其他地区)";
   var BEST_FAILOVER_GROUP = "⚡ 全局故障回退";
   var PROVIDER_AUTO_GROUP = "⚡ 订阅源自动 (全部)";
@@ -136,8 +136,8 @@ function main(config, options) {
   // [F1 实机] 订阅提示节点有英文形态(Expire Date/Traffic Reset/221.06 GB)，
   // 仅中文关键词会漏进全局组，补英文模式
   var INFO_DENY = /(到期|剩余|流量|官网|套餐|群|重置|网址|故障|维护|expire|traffic|reset|remaining|days?\s*left|\d+(\.\d+)?\s*[tg]b\b|([2-9]|[1-9]\d+)(\.\d+)?\s*[xX倍])/i;
-  var PREFERRED_REGION = /(Singapore|新加坡|狮城|🇸🇬|\bSG\b|\bSGP\b|Korea|韩国|首尔|🇰🇷|\bKR\b|\bKOR\b|Seoul|Japan|日本|东京|大阪|京都|名古屋|福冈|札幌|横滨|🇯🇵|\bJP\b|\bJPN\b|Tokyo|Osaka|Kyoto|Nagoya|Fukuoka|Sapporo|Yokohama|United\s*States|美国|洛杉矶|圣何塞|旧金山|西雅图|纽约|达拉斯|硅谷|芝加哥|波特兰|凤凰城|华盛顿|迈阿密|🇺🇸|\bUS\b|\bUSA\b|Los\s*Angeles|San\s*Jose|San\s*Francisco|Seattle|New\s*York|Dallas|Silicon\s*Valley|Chicago|Portland|Phoenix|Washington|Miami)/i;
-  var AI_ALLOW = /(United\s*States|美国|🇺🇸|\bUS\b|\bUSA\b|Los\s*Angeles|San\s*Jose|San\s*Francisco|Seattle|New\s*York|Dallas|Silicon\s*Valley|Japan|日本|🇯🇵|\bJP\b|\bJPN\b|Tokyo|Osaka|Singapore|新加坡|狮城|🇸🇬|\bSG\b|Korea|韩国|首尔|🇰🇷|\bKR\b|Seoul)/i;
+  var PREFERRED_REGION = /(Singapore|新加坡|狮城|🇸🇬|\bSG\b|\bSGP\b|Korea|韩国|首尔|🇰🇷|\bKR\b|\bKOR\b|Seoul|Japan|日本|东京|大阪|京都|名古屋|福冈|札幌|横滨|🇯🇵|\bJP\b|\bJPN\b|Tokyo|Osaka|Kyoto|Nagoya|Fukuoka|Sapporo|Yokohama|United\s*States|美国|洛杉矶|圣何塞|旧金山|西雅图|纽约|达拉斯|硅谷|芝加哥|波特兰|凤凰城|华盛顿|迈阿密|🇺🇸|\bUS\b|\bUSA\b|Los\s*Angeles|San\s*Jose|San\s*Francisco|Seattle|New\s*York|Dallas|Silicon\s*Valley|Chicago|Portland|Phoenix|Washington|Miami|Canada|Canadian|加拿大|🇨🇦|\bCA\b|\bCAN\b|Toronto|多伦多|Vancouver|温哥华|Montreal|蒙特利尔|Ottawa|渥太华|Calgary|卡尔加里)/i;
+  var AI_ALLOW = /(United\s*States|美国|🇺🇸|\bUS\b|\bUSA\b|Los\s*Angeles|San\s*Jose|San\s*Francisco|Seattle|New\s*York|Dallas|Silicon\s*Valley|Japan|日本|🇯🇵|\bJP\b|\bJPN\b|Tokyo|Osaka|Singapore|新加坡|狮城|🇸🇬|\bSG\b|Korea|韩国|首尔|🇰🇷|\bKR\b|Seoul|Canada|Canadian|加拿大|🇨🇦|\bCA\b|\bCAN\b|Toronto|多伦多|Vancouver|温哥华|Montreal|蒙特利尔|Ottawa|渥太华|Calgary|卡尔加里)/i;
   var DOCKER_ALLOW = /(Japan|日本|🇯🇵|\bJP\b|\bJPN\b|Tokyo|Osaka|京都|名古屋|东京|大阪|Singapore|新加坡|狮城|🇸🇬|\bSG\b|\bSGP\b)/i;
 
   // --- 域名与进程列表 ---
@@ -169,9 +169,6 @@ function main(config, options) {
     "aliyun.com", "aliyuncs.com", "163.com", "126.net", "bilibili.com",
     "hdslb.com", "jd.com", "douyin.com", "weibo.com", "zhihu.com", "deepseek.com"
   ];
-  if (!DOCKER_HUB_VIA_PROXY) {
-    CN_DOMAINS.push("docker.io", "registry-1.docker.io");
-  }
 
   var CN_PROCESSES = [
     // Windows 进程名
@@ -327,10 +324,12 @@ function main(config, options) {
   });
 
   var providerDenyFilter = "(?i)(" + REGION_DENY.source + "|" + INFO_DENY.source + ")";
-  var globalProviderFields = providerNames.length > 0 ? { use: providerNames, "exclude-filter": providerDenyFilter } : {};
-  var preferredProviderFields = providerNames.length > 0 ? { use: providerNames, filter: "(?i)(" + PREFERRED_REGION.source + ")", "exclude-filter": providerDenyFilter } : {};
-  var aiProviderFields = providerNames.length > 0 ? { use: providerNames, filter: "(?i)(" + AI_ALLOW.source + ")", "exclude-filter": providerDenyFilter } : {};
-  var dockerProviderFields = providerNames.length > 0 ? { use: providerNames, filter: "(?i)(" + DOCKER_ALLOW.source + ")", "exclude-filter": providerDenyFilter } : {};
+  // 所有挂 use 的组都拒绝空池回退: mihomo 空组兼容分支会退回 DIRECT,
+  // 静态成员与 provider 并存时同样存在这条绕过路径。
+  var globalProviderFields = providerNames.length > 0 ? { use: providerNames, "exclude-filter": providerDenyFilter, "empty-fallback": "REJECT" } : {};
+  var preferredProviderFields = providerNames.length > 0 ? { use: providerNames, filter: "(?i)(" + PREFERRED_REGION.source + ")", "exclude-filter": providerDenyFilter, "empty-fallback": "REJECT" } : {};
+  var aiProviderFields = providerNames.length > 0 ? { use: providerNames, filter: "(?i)(" + AI_ALLOW.source + ")", "exclude-filter": providerDenyFilter, "empty-fallback": "REJECT" } : {};
+  var dockerProviderFields = providerNames.length > 0 ? { use: providerNames, filter: "(?i)(" + DOCKER_ALLOW.source + ")", "exclude-filter": providerDenyFilter, "empty-fallback": "REJECT" } : {};
 
   // 4) 自动测速组构建
   // [ISSUE-02] 静态成员池为空时不建静态测速组: 空成员组会被内核拒绝加载。
@@ -468,7 +467,11 @@ function main(config, options) {
   };
 
   // 8) 严格优先级路由规则
+  // 关闭容器代理时, Docker Hub 的直连例外必须排在 IN-PORT / 进程名捕获之前,
+  // 否则容器流量会被 "锁死 JP/SG" 规则先截走, 开关形同虚设。
+  var dockerHubDirectRules = DOCKER_HUB_VIA_PROXY ? [] : suffix(["docker.io", "registry-1.docker.io"], "DIRECT");
   config.rules = [].concat(
+    dockerHubDirectRules,
     [
       // 1. 私网/IP 例外提到最前 [ISSUE-09]：QUIC/DoT 阻断不再误伤内网，
       //    也不为私网流量触发 GEOIP 的 DNS 解析。私网目的地址是明确例外，直连。
@@ -489,8 +492,8 @@ function main(config, options) {
       "AND,((NETWORK,UDP),(DST-PORT,853)),REJECT",
 
       // 3. Docker 流量锁死 JP/SG [ISSUE-03] 提到国内规则之前：容器访问国内
-      //    镜像/CN IP 也强制走容器组，兑现“锁死”语义。若希望国内镜像直连提速，
-      //    把这两条移回 GEOIP,CN 之后，并同步修改本注释。
+      //    镜像/CN IP 也强制走容器组，兑现“锁死”语义。DOCKER_HUB_VIA_PROXY=false
+      //    时 Docker Hub 例外已前置，不受这里的锁死影响。
       "IN-PORT," + DOCKER_PORT + "," + DOCKER_GROUP
     ],
     DOCKER_PROCESSES.map(function(p) { return "PROCESS-NAME," + p + "," + DOCKER_GROUP; }),

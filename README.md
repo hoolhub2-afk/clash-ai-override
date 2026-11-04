@@ -5,7 +5,7 @@ FlClash / Clash Verge(mihomo 内核)覆写脚本:**AI 专属分组 + 整机出�
 ## 特性
 
 - **IP 一致性**:全局代理默认跟随「🤖 AI 专属」组——整机出口 IP 与 ChatGPT/Claude/Gemini 完全一致。AI 自动组用 **fallback 稳态模式**:按固定顺序取第一个存活节点,只有节点失效才切换,出口 IP 不因延迟波动漂移。稳态的边界:节点宕机或被风控(健康检查 403)时自动组仍会切换、IP 随之变化;要钉死某个 IP 就在 AI 专属里手动指定节点。
-- **AI 分流**:ChatGPT / Claude / Gemini / Grok / Perplexity / Copilot 等 30 个域名走美/日/新/韩专属池;测速探测点用 `chatgpt.com/cdn-cgi/trace`(`expected-status: 200`),命中风控的节点自动淘汰。
+- **AI 分流**:ChatGPT / Claude / Gemini / Grok / Perplexity / Copilot 等 30 个域名走美/日/新/韩/加专属池(支持 Canada / 🇨🇦 / CA / CAN / 加拿大 / 多伦多 / Vancouver 等写法);测速探测点用 `chatgpt.com/cdn-cgi/trace`(`expected-status: 200`),命中风控的节点自动淘汰。
 - **Docker 锁定**:7895 专属监听端口 + Docker 进程名的规则排在国内直连之前,容器流量(含国内镜像)强制走 JP/SG。
 - **防泄露**:国内域名走国内 DoH、其余走经代理的境外 DoH(DoH 服务器 IP 锁经代理);阻断海外 QUIC(UDP 443)与 DoT(853)旁路;内网域名交还系统 DNS。
 - **接入安全**:入站鉴权——只有本机回环免密,局域网设备与 Docker 容器都必须带凭据,不再是开放代理;`PROXY_PASS` 还是占位符时脚本直接报错,不会带着 `CHANGE_ME` 运行。
@@ -37,7 +37,7 @@ FlClash / Clash Verge(mihomo 内核)覆写脚本:**AI 专属分组 + 整机出�
 ## 测试与验证
 
 ```bash
-# 结构回归: 37 条断言(空组、纯 provider 默认出口、凭据 fail closed、端口冲突、Cloudflare 管理面板直连、规则顺序、循环引用、鉴权字段、过滤器等)
+# 结构回归: 44 条断言(空组、纯 provider 默认出口、凭据 fail closed、端口冲突、Cloudflare 管理面板直连、规则顺序、循环引用、鉴权字段、过滤器、空池兜底、加拿大 AI 池、Docker Hub 开关优先级等)
 node test/test-override.js
 
 # 构建无注释版 override.min.js(含行为等价 + 零注释幂等自检)
@@ -71,7 +71,7 @@ override.js              覆写脚本源码(主干维护源)
 override.min.js          无注释构建产物(node scripts/strip-comments.js 生成, 勿手改)
 override-v1.3.2.js       生产加固版源码(支持 Provider _ai 独立测速与 RE2 正则)
 CLAUDE.md                Claude Code 智能体项目指引与架构规范
-test/test-override.js    结构回归测试(37 条断言, 支持 TEST_TARGET 多目标验证)
+test/test-override.js    结构回归测试(44 条断言, 支持 TEST_TARGET 多目标验证)
 scripts/strip-comments.js       无注释构建工具
 scripts/gen-verify-config.js    真内核校验配置生成
 scripts/privacy-scan.sh         推送前隐私泄露扫描
@@ -142,4 +142,4 @@ bash scripts/privacy-scan.sh
 - **工具链**:开关改为可选第二参数 `options`,测试不再做源码字符串替换(改稿的写法会让 `test-override.js` 直接崩在锚点缺失上);`strip-comments.js` / `gen-verify-config.js` 同步改为注入测试凭据。
 - **规则顺序**:`169.254/16`、`100.64/10`、`GEOSITE,private`、`GEOIP,private` 一并提到 QUIC/DoT 阻断之前。
 
-本轮 `node test/test-override.js` 37 条断言全绿,`override.min.js` 重建通过行为等价与零注释自检;`mihomo -t` 真内核复验需在装有内核的机器上执行(本次复核环境未安装 mihomo)。
+本轮 `node test/test-override.js` 44 条断言全绿,`override.min.js` 重建通过行为等价与零注释自检;`mihomo -t` 真内核复验需在装有内核的机器上执行(本次复核环境未安装 mihomo)。
