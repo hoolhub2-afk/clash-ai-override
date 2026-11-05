@@ -5,7 +5,7 @@ FlClash / Clash Verge(mihomo 内核)覆写脚本:**AI 专属分组 + 整机出�
 ## 特性
 
 - **IP 一致性**:全局代理默认跟随「🤖 AI 专属」组——整机出口 IP 与 ChatGPT/Claude/Gemini 完全一致。AI 自动组用 **fallback 稳态模式**:按固定顺序取第一个存活节点,只有节点失效才切换,出口 IP 不因延迟波动漂移。稳态的边界:节点宕机或被风控(健康检查 403)时自动组仍会切换、IP 随之变化;要钉死某个 IP 就在 AI 专属里手动指定节点。
-- **AI 分流**:ChatGPT / Claude / Gemini / Grok / Perplexity / Copilot 等 30 个域名走美/日/新/韩/加专属池(支持 Canada / 🇨🇦 / CA / CAN / 加拿大 / 多伦多 / Vancouver 等写法);测速探测点用 `chatgpt.com/cdn-cgi/trace`(`expected-status: 200`),命中风控的节点自动淘汰。
+- **AI 分流**:ChatGPT / Claude / Gemini / Grok / Perplexity / Copilot 等 30 个域名走低延迟候选池:美/日/新/韩/加、台湾、英国、法国、德国、菲律宾、荷兰、土耳其、越南、马来西亚、泰国(支持各地区常见中英文名称与旗帜写法);测速探测点用 `chatgpt.com/cdn-cgi/trace`(`expected-status: 200`),命中风控的节点自动淘汰。AI 自动组保持 **fallback 稳态模式**,不会因延迟波动主动切换出口。
 - **Docker 锁定**:7895 专属监听端口 + Docker 进程名的规则排在国内直连之前,容器流量(含国内镜像)强制走 JP/SG;没有可用 JP/SG 节点时容器流量拒绝,避免意外直连或混用其他出口。
 - **防泄露**:国内域名走国内 DoH、其余走经代理的境外 DoH(DoH 服务器 IP 锁经代理);阻断海外 QUIC(UDP 443)与 DoT(853)旁路;内网域名交还系统 DNS。
 - **接入安全**:入站鉴权——只有本机回环免密,局域网设备与 Docker 容器都必须带凭据,不再是开放代理;`PROXY_PASS` 还是占位符时脚本直接报错,不会带着 `CHANGE_ME` 运行。
