@@ -38,7 +38,7 @@ function check(id, desc, fn) {
   }
 }
 
-const MAIN = "🌐 全局代理", AI = "🤖 AI 专属 (美/日/新/韩/加)";
+const MAIN = "🌐 全局代理", AI = "🤖 AI 专属 (低延迟候选)";
 const DOCKER = "🐳 容器专属 (JP/SG)";
 const AI_AUTO = "🤖 AI 自动 (稳态)";
 const BEST_AUTO = "⚡ 优选自动 (美/日/新/韩/加)";

@@ -112,7 +112,7 @@ function main(config, options) {
 
   // --- 策略组名称 --- [ISSUE-11] 已删除未使用的 HARK/MANUAL/IP_CHECK/BEST_GLOBAL 四个常量
   var MAIN_GROUP = "🌐 全局代理";
-  var AI_GROUP = "🤖 AI 专属 (美/日/新/韩/加)";
+  var AI_GROUP = "🤖 AI 专属 (低延迟候选)";
   var AI_AUTO_GROUP = "🤖 AI 自动 (稳态)";
   var DOCKER_AUTO_GROUP = "🐳 容器自动测速";
   var BEST_AUTO_GROUP = "⚡ 优选自动 (美/日/新/韩/加)";
@@ -127,7 +127,7 @@ function main(config, options) {
   var MAX_PROXY_NAME_LENGTH = 1024;
 
   // --- 测速参数 ---
-  var TEST_URL = "http://cp.cloudflare.com/generate_204";
+  var TEST_URL = "https://cp.cloudflare.com/generate_204";
   // [ISSUE-04] AI 组测速改用 ChatGPT 的 Cloudflare trace 探测点：命中风控的出口
   // 返回 403，配合 expected-status=200 会被测速淘汰。
   // [实测 2026-10-25] 经 AI 组访问 trace 返回 200 且 loc 与所选节点地区一致;
@@ -145,7 +145,7 @@ function main(config, options) {
   // 仅中文关键词会漏进全局组，补英文模式
   var INFO_DENY = /(到期|剩余|流量|官网|套餐|群|重置|网址|故障|维护|expire|traffic|reset|remaining|days?\s*left|\d+(\.\d+)?\s*[tg]b\b|([2-9]|[1-9]\d+)(\.\d+)?\s*[xX倍])/i;
   var PREFERRED_REGION = /(Singapore|新加坡|狮城|🇸🇬|\bSG\b|\bSGP\b|Korea|韩国|首尔|🇰🇷|\bKR\b|\bKOR\b|Seoul|Japan|日本|东京|大阪|京都|名古屋|福冈|札幌|横滨|🇯🇵|\bJP\b|\bJPN\b|Tokyo|Osaka|Kyoto|Nagoya|Fukuoka|Sapporo|Yokohama|United\s*States|美国|洛杉矶|圣何塞|旧金山|西雅图|纽约|达拉斯|硅谷|芝加哥|波特兰|凤凰城|华盛顿|迈阿密|🇺🇸|\bUS\b|\bUSA\b|Los\s*Angeles|San\s*Jose|San\s*Francisco|Seattle|New\s*York|Dallas|Silicon\s*Valley|Chicago|Portland|Phoenix|Washington|Miami|Canada|Canadian|加拿大|🇨🇦|\bCA\b|\bCAN\b|Toronto|多伦多|Vancouver|温哥华|Montreal|蒙特利尔|Ottawa|渥太华|Calgary|卡尔加里)/i;
-  var AI_ALLOW = /(United\s*States|美国|🇺🇸|\bUS\b|\bUSA\b|Los\s*Angeles|San\s*Jose|San\s*Francisco|Seattle|New\s*York|Dallas|Silicon\s*Valley|Japan|日本|🇯🇵|\bJP\b|\bJPN\b|Tokyo|Osaka|Singapore|新加坡|狮城|🇸🇬|\bSG\b|Korea|韩国|首尔|🇰🇷|\bKR\b|Seoul|Canada|Canadian|加拿大|🇨🇦|\bCA\b|\bCAN\b|Toronto|多伦多|Vancouver|温哥华|Montreal|蒙特利尔|Ottawa|渥太华|Calgary|卡尔加里)/i;
+  var AI_ALLOW = /(United\s*States|美国|🇺🇸|\bUS\b|\bUSA\b|Los\s*Angeles|San\s*Jose|San\s*Francisco|Seattle|New\s*York|Dallas|Silicon\s*Valley|Japan|日本|🇯🇵|\bJP\b|\bJPN\b|Tokyo|Osaka|Singapore|新加坡|狮城|🇸🇬|\bSG\b|Korea|韩国|首尔|🇰🇷|\bKR\b|Seoul|Canada|Canadian|加拿大|🇨🇦|\bCA\b|\bCAN\b|Toronto|多伦多|Vancouver|温哥华|Montreal|蒙特利尔|Ottawa|渥太华|Calgary|卡尔加里|Taiwan|台湾|台灣|🇹🇼|\bTW\b|\bTWN\b|Taipei|台北|Great\s*Britain|United\s*Kingdom|英国|🇬🇧|France|法国|🇫🇷|Germany|德国|🇩🇪|Philippines|菲律宾|🇵🇭|Netherlands|荷兰|🇳🇱|Turkey|土耳其|🇹🇷|Vietnam|越南|🇻🇳|Malaysia|马来西亚|🇲🇾|Thailand|泰国|🇹🇭)/i;
   var DOCKER_ALLOW = /(Japan|日本|🇯🇵|\bJP\b|\bJPN\b|Tokyo|Osaka|京都|名古屋|东京|大阪|Singapore|新加坡|狮城|🇸🇬|\bSG\b|\bSGP\b)/i;
 
   // --- 域名与进程列表 ---
